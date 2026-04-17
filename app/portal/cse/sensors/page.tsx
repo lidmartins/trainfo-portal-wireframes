@@ -7,13 +7,18 @@ import { Search, FileText, Heart, Video, BarChart, Settings, AlertTriangle, Wren
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
+import { TablePagination } from "@/components/ui/table-pagination"
 
+
+const PAGE_SIZE = 15
 
 export default function CSESensorsPage() {
   const searchParams = useSearchParams()
   const [sensorType, setSensorType] = useState("trainfo")
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "down" | "calibration">("all")
+  const [sensorPage, setSensorPage] = useState(1)
+
   // Check URL for filter param
   useEffect(() => {
     const filter = searchParams.get('filter')
@@ -21,6 +26,9 @@ export default function CSESensorsPage() {
       setStatusFilter('down')
     }
   }, [searchParams])
+
+  // Reset page when filters/tab change
+  useEffect(() => { setSensorPage(1) }, [searchTerm, statusFilter, sensorType])
 
   // Calibration Status options:
   // - Unassigned (State 0)
@@ -110,6 +118,28 @@ export default function CSESensorsPage() {
       calibration: "Calibrated (State 3)",
       lastBlockage: "45 min ago",
     },
+    { id: "341", location: "Blanding blvd & 103rd st", customer: "North Florida TPO", status: "Active", calibration: "Calibrated (State 3)", lastBlockage: "1 hr ago" },
+    { id: "342", location: "Collins rd & oak st", customer: "North Florida TPO", status: "Down", calibration: "Low Power (State -1)", lastBlockage: "2 days ago" },
+    { id: "489", location: "Beach blvd @ hodges blvd", customer: "City Of Nashville TN", status: "Active", calibration: "Calibrated (State 3)", lastBlockage: "3 hrs ago" },
+    { id: "512", location: "University blvd & st johns bluff", customer: "City Of Nashville TN", status: "Active", calibration: "Validating (State 2)", lastBlockage: "20 min ago" },
+    { id: "TAS3ACF01", location: "Baymeadows rd @ i-95", customer: "City Of Nashville TN", status: "Active", calibration: "Calibrated (State 3)", lastBlockage: "6 hrs ago" },
+    { id: "TAS3ACF02", location: "San jose blvd @ old st augustine", customer: "City Of Alabaster AL", status: "Down", calibration: "Calibrating (State 1)", lastBlockage: "4 days ago" },
+    { id: "601", location: "Philips hwy @ emerson st", customer: "City Of Alabaster AL", status: "Active", calibration: "Calibrated (State 3)", lastBlockage: "55 min ago" },
+    { id: "602", location: "Cassat ave & edgewood ave", customer: "City Of Alabaster AL", status: "Active", calibration: "Calibrated (State 3)", lastBlockage: "2 hrs ago" },
+    { id: "778", location: "Monument rd & atlantic blvd", customer: "County Of Macomb MI", status: "Active", calibration: "Unassigned (State 0)", lastBlockage: "8 hrs ago" },
+    { id: "779", location: "Merrill rd & regency sq blvd", customer: "County Of Macomb MI", status: "Down", calibration: "Calibrated (State 3)", lastBlockage: "6 days ago" },
+    { id: "830", location: "Normandy blvd &103rd st", customer: "County Of Macomb MI", status: "Active", calibration: "Calibrated (State 3)", lastBlockage: "35 min ago" },
+    { id: "831", location: "Lenoir ave & main st", customer: "County Of Macomb MI", status: "Active", calibration: "Calibrated (State 3)", lastBlockage: "1 hr ago" },
+    { id: "TAS4BDE05", location: "Commonwealth ave @ alt 19", customer: "City Of Little Rock AR", status: "Active", calibration: "Calibrated (State 3)", lastBlockage: "15 min ago" },
+    { id: "TAS4BDE06", location: "Timuquana rd & wilson blvd", customer: "City Of Little Rock AR", status: "Down", calibration: "Calibrating (State 1)", lastBlockage: "9 days ago" },
+    { id: "944", location: "103rd st & ramona blvd", customer: "City Of Little Rock AR", status: "Active", calibration: "Validating (State 2)", lastBlockage: "4 hrs ago" },
+    { id: "945", location: "Plymouth st & main st n", customer: "City Of Little Rock AR", status: "Active", calibration: "Calibrated (State 3)", lastBlockage: "50 min ago" },
+    { id: "1023", location: "Dunn ave & i-295 nb ramp", customer: "Florida International University", status: "Active", calibration: "Calibrated (State 3)", lastBlockage: "2 hrs ago" },
+    { id: "1024", location: "Soutel dr & commonwealth ave", customer: "Florida International University", status: "Active", calibration: "Calibrated (State 3)", lastBlockage: "3 hrs ago" },
+    { id: "1205", location: "Lane ave & timuquana rd", customer: "North Florida TPO", status: "Down", calibration: "Low Power (State -1)", lastBlockage: "11 days ago" },
+    { id: "1206", location: "Argyle forest blvd & bichara blvd", customer: "North Florida TPO", status: "Active", calibration: "Calibrated (State 3)", lastBlockage: "25 min ago" },
+    { id: "TAS5CEG07", location: "Old middleburg rd & 103rd st", customer: "City Of Nashville TN", status: "Active", calibration: "Calibrated (State 3)", lastBlockage: "7 hrs ago" },
+    { id: "TAS5CEG08", location: "Hammond blvd & edgewood ave", customer: "City Of Alabaster AL", status: "Active", calibration: "Unassigned (State 0)", lastBlockage: "1 day ago" },
   ]
 
   const filteredSensors = sensors.filter((sensor) => {
@@ -129,6 +159,8 @@ export default function CSESensorsPage() {
 
   const downCount = sensors.filter(s => s.status === "Down").length
   const calibrationCount = sensors.filter(s => !s.calibration.includes("Calibrated (State 3)")).length
+  const sensorTotalPages = Math.max(1, Math.ceil(filteredSensors.length / PAGE_SIZE))
+  const pagedSensors = filteredSensors.slice((sensorPage - 1) * PAGE_SIZE, sensorPage * PAGE_SIZE)
 
   return (
     <PortalLayout
@@ -255,7 +287,7 @@ export default function CSESensorsPage() {
         <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
             <p className="text-sm text-muted-foreground">
-              Showing {filteredSensors.length} of {sensors.length} sensors
+              Showing {pagedSensors.length} of {filteredSensors.length} sensors
             </p>
           </div>
           <div className="overflow-x-auto">
@@ -272,7 +304,7 @@ export default function CSESensorsPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredSensors.map((sensor) => (
+                {pagedSensors.map((sensor) => (
                   <tr key={sensor.id} className={`border-b border-border hover:bg-muted/50 transition ${sensor.status === "Down" ? "bg-red-50" : ""}`}>
                     <td className="py-4 font-medium text-accent">{sensor.id}</td>
                     <td className="py-4">{sensor.location}</td>
@@ -350,6 +382,7 @@ export default function CSESensorsPage() {
           {filteredSensors.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">No sensors found matching your filters.</div>
           )}
+          <TablePagination currentPage={sensorPage} totalPages={sensorTotalPages} onPageChange={setSensorPage} />
         </Card>
       </div>
     </PortalLayout>

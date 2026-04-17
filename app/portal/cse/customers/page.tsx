@@ -5,10 +5,14 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Search, Eye, Edit, Archive, X, AlertTriangle, Check } from "lucide-react"
 import { useState } from "react"
+import { TablePagination } from "@/components/ui/table-pagination"
+
+const PAGE_SIZE = 15
 
 export default function CSECustomersPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "new" | "decommissioned">("active")
+  const [customerPage, setCustomerPage] = useState(1)
   const [decommissionModal, setDecommissionModal] = useState<{ open: boolean; customer: { id: number; name: string; status: string } | null }>({ open: false, customer: null })
   const [activateModal, setActivateModal] = useState<{ open: boolean; customer: { id: number; name: string } | null }>({ open: false, customer: null })
   const [confirmText, setConfirmText] = useState("")
@@ -95,6 +99,28 @@ export default function CSECustomersPage() {
       status: "New",
       licenseActivated: "",
     },
+    { id: 137, name: "City Of Aurora CO", province: "Colorado", crossings: 5, status: "Active", licenseActivated: "02/14/2025" },
+    { id: 138, name: "Broward County Transit", province: "Florida", crossings: 18, status: "Active", licenseActivated: "07/30/2024" },
+    { id: 139, name: "City Of Tucson AZ", province: "Arizona", crossings: 9, status: "Active", licenseActivated: "04/01/2025" },
+    { id: 140, name: "Capital Metro Austin", province: "Texas", crossings: 23, status: "Active", licenseActivated: "10/11/2024" },
+    { id: 141, name: "City Of Raleigh NC", province: "North Carolina", crossings: 4, status: "Active", licenseActivated: "01/20/2025" },
+    { id: 142, name: "Denver Regional Transit", province: "Colorado", crossings: 31, status: "Active", licenseActivated: "08/05/2023" },
+    { id: 143, name: "City Of Columbus OH", province: "Ohio", crossings: 7, status: "Active", licenseActivated: "03/17/2025" },
+    { id: 144, name: "MTA Long Island Rail Road", province: "New York", crossings: 55, status: "Active", licenseActivated: "11/22/2023" },
+    { id: 145, name: "City Of Louisville KY", province: "Kentucky", crossings: 3, status: "Active", licenseActivated: "06/09/2024" },
+    { id: 146, name: "Sound Transit Seattle", province: "Washington", crossings: 14, status: "Active", licenseActivated: "09/15/2024" },
+    { id: 147, name: "City Of Baton Rouge LA", province: "Louisiana", crossings: 6, status: "Active", licenseActivated: "12/03/2024" },
+    { id: 148, name: "Greater Cleveland RTA", province: "Ohio", crossings: 11, status: "Active", licenseActivated: "05/27/2024" },
+    { id: 149, name: "City Of Phoenix AZ", province: "Arizona", crossings: 29, status: "Active", licenseActivated: "02/01/2024" },
+    { id: 150, name: "Hampton Roads Transit", province: "Virginia", crossings: 8, status: "Active", licenseActivated: "07/14/2024" },
+    { id: 151, name: "City Of Savannah GA", province: "Georgia", crossings: 2, status: "Active", licenseActivated: "03/28/2025" },
+    { id: 152, name: "Tri-County Metropolitan", province: "Oregon", crossings: 19, status: "Decommissioned", licenseActivated: "04/12/2022" },
+    { id: 153, name: "City Of El Paso TX", province: "Texas", crossings: 0, status: "New", licenseActivated: "" },
+    { id: 154, name: "Pinellas Suncoast Transit", province: "Florida", crossings: 0, status: "New", licenseActivated: "" },
+    { id: 155, name: "City Of Kansas City MO", province: "Missouri", crossings: 16, status: "Active", licenseActivated: "10/30/2023" },
+    { id: 156, name: "Central Florida Rail Corridor", province: "Florida", crossings: 37, status: "Active", licenseActivated: "01/08/2024" },
+    { id: 157, name: "City Of Charlotte NC", province: "North Carolina", crossings: 0, status: "New", licenseActivated: "" },
+    { id: 158, name: "Sacramento Regional Transit", province: "California", crossings: 22, status: "Decommissioned", licenseActivated: "06/18/2021" },
   ])
 
   const handleStartEdit = (customer: { id: number; name: string }) => {
@@ -121,6 +147,8 @@ export default function CSECustomersPage() {
       (statusFilter === "decommissioned" && customer.status === "Decommissioned")
     return matchesSearch && matchesStatus
   })
+  const customerTotalPages = Math.max(1, Math.ceil(filteredCustomers.length / PAGE_SIZE))
+  const pagedCustomers = filteredCustomers.slice((customerPage - 1) * PAGE_SIZE, customerPage * PAGE_SIZE)
 
   return (
     <PortalLayout
@@ -154,7 +182,7 @@ export default function CSECustomersPage() {
           <div className="flex gap-3">
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as "all" | "active" | "new" | "decommissioned")}
+              onChange={(e) => { setStatusFilter(e.target.value as "all" | "active" | "new" | "decommissioned"); setCustomerPage(1) }}
               className="px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:border-accent"
             >
               <option value="all">All Customers</option>
@@ -168,7 +196,7 @@ export default function CSECustomersPage() {
                 type="text"
                 placeholder="Search customers..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => { setSearchTerm(e.target.value); setCustomerPage(1) }}
                 className="pl-10 pr-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:border-accent w-64"
               />
             </div>
@@ -190,7 +218,7 @@ export default function CSECustomersPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredCustomers.map((customer) => (
+                {pagedCustomers.map((customer) => (
                   <tr key={customer.id} className="border-b border-border hover:bg-muted/50 transition">
                     <td className="py-4">
                       {editingCustomerId === customer.id ? (
@@ -293,6 +321,7 @@ export default function CSECustomersPage() {
           {filteredCustomers.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">No customers found matching your filters.</div>
           )}
+          <TablePagination currentPage={customerPage} totalPages={customerTotalPages} onPageChange={setCustomerPage} />
         </Card>
       </div>
       {/* Decommission Confirmation Modal */}

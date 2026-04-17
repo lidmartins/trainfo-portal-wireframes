@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc *)",
+      "Bash(pkill -f \"next dev\")",
+      "Bash(sed -i '' 's/const PAGE_SIZE = 10/const PAGE_SIZE = 2/g' /Users/anamartins/TRAINFO/Projects/angular/wireframe/trainfo-website-wireframes/app/portal/cse/sensors/page.tsx /Users/anamartins/TRAINFO/Projects/angular/wireframe/trainfo-website-wireframes/app/portal/cse/customers/page.tsx '/Users/anamartins/TRAINFO/Projects/angular/wireframe/trainfo-website-wireframes/app/portal/cse/customers/[id]/page.tsx')",
+      "Bash(sed -i '' 's/const TAB_PAGE_SIZE = 10/const TAB_PAGE_SIZE = 2/g' '/Users/anamartins/TRAINFO/Projects/angular/wireframe/trainfo-website-wireframes/app/customers/[id]/crossings/[crossingId]/configure/page.tsx')",
+      "Bash(sed -i '' 's/const PAGE_SIZE = 2/const PAGE_SIZE = 15/g' /Users/anamartins/TRAINFO/Projects/angular/wireframe/trainfo-website-wireframes/app/portal/cse/sensors/page.tsx /Users/anamartins/TRAINFO/Projects/angular/wireframe/trainfo-website-wireframes/app/portal/cse/customers/page.tsx '/Users/anamartins/TRAINFO/Projects/angular/wireframe/trainfo-website-wireframes/app/portal/cse/customers/[id]/page.tsx')",
+      "Bash(sed -i '' 's/const TAB_PAGE_SIZE = 2/const TAB_PAGE_SIZE = 15/g' '/Users/anamartins/TRAINFO/Projects/angular/wireframe/trainfo-website-wireframes/app/customers/[id]/crossings/[crossingId]/configure/page.tsx')"
+    ]
+  }
+}

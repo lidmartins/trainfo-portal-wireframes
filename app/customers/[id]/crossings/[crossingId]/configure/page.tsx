@@ -5,7 +5,10 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Edit, Trash2, Settings, MapPin, Plus, Navigation, Monitor, Radio, FileText, ChevronRight, X, ThumbsUp } from "lucide-react"
 import { useState } from "react"
+import { TablePagination } from "@/components/ui/table-pagination"
 import { useParams, useRouter } from "next/navigation"
+
+const TAB_PAGE_SIZE = 15
 
 export default function ConfigureCrossingPage() {
   const params = useParams()
@@ -15,12 +18,47 @@ export default function ConfigureCrossingPage() {
 
   // Hardcoded customer name for wireframe
   const customerName = "North Florida TPO"
+  const MODAL_PAGE_SIZE = 6
 
   const [configTab, setConfigTab] = useState("rail")
+  const [railTabPage, setRailTabPage] = useState(1)
+  const [roadTabPage, setRoadTabPage] = useState(1)
+  const [btTabPage, setBtTabPage] = useState(1)
+  const [bellTabPage, setBellTabPage] = useState(1)
   const [showAddRailSegment, setShowAddRailSegment] = useState(false)
   const [showAddRoadSegment, setShowAddRoadSegment] = useState(false)
   const [showAddBellConfig, setShowAddBellConfig] = useState(false)
+  const [addBellStep, setAddBellStep] = useState(1)
+  const [bellSearch, setBellSearch] = useState("")
+  const [bellPage, setBellPage] = useState(1)
+  const [selectedBell, setSelectedBell] = useState<string | null>(null)
+  const [bellFreqRows, setBellFreqRows] = useState<{ freq: string; power: string }[]>([])
   const [showEditBellConfig, setShowEditBellConfig] = useState<{ open: boolean; freq: string; power: string }>({ open: false, freq: "", power: "" })
+
+  const bellData = [
+    { type: "B42", frequencies: ["2379", "2831"] },
+    { type: "B20", frequencies: ["1970", "2665", "3413"] },
+    { type: "B43", frequencies: ["1529", "2143"] },
+    { type: "B21", frequencies: ["1416", "1911", "2439"] },
+    { type: "B44", frequencies: ["1572", "2186", "2789", "3435"] },
+    { type: "B22", frequencies: ["1443", "1949", "2132"] },
+    { type: "B45", frequencies: ["1448", "1934", "2492", "3074"] },
+    { type: "B01", frequencies: ["1588", "2147", "2740"] },
+    { type: "B46", frequencies: ["2810", "1625"] },
+    { type: "B02", frequencies: ["1399", "1889", "2417", "2976"] },
+  ]
+  const filteredBells = bellData.filter(b => b.type.toLowerCase().includes(bellSearch.toLowerCase()))
+  const bellTotalPages = Math.max(1, Math.ceil(filteredBells.length / MODAL_PAGE_SIZE))
+  const pagedBells = filteredBells.slice((bellPage - 1) * MODAL_PAGE_SIZE, bellPage * MODAL_PAGE_SIZE)
+  const selectedBellData = bellData.find(b => b.type === selectedBell) ?? null
+  const closeAddBellModal = () => {
+    setShowAddBellConfig(false)
+    setAddBellStep(1)
+    setBellSearch("")
+    setBellPage(1)
+    setSelectedBell(null)
+    setBellFreqRows([])
+  }
   const [showEditRailSegment, setShowEditRailSegment] = useState(false)
   const [editRailMaxSpeed, setEditRailMaxSpeed] = useState("80")
   const [editRailDistance, setEditRailDistance] = useState("1500")
@@ -63,16 +101,15 @@ export default function ConfigureCrossingPage() {
     { id: "273099A", location: "Main Street",              lat: "25.7617",    long: "-80.1918"     },
     { id: "273100B", location: "Biscayne Blvd",            lat: "25.7839",    long: "-80.1912"     },
   ]
-  const RAIL_PAGE_SIZE = 5
   const filteredRailCrossings = fraRailCrossings.filter(
     (c) =>
       c.id.toLowerCase().includes(railCrossingSearch.toLowerCase()) ||
       c.location.toLowerCase().includes(railCrossingSearch.toLowerCase())
   )
-  const railTotalPages = Math.max(1, Math.ceil(filteredRailCrossings.length / RAIL_PAGE_SIZE))
+  const railTotalPages = Math.max(1, Math.ceil(filteredRailCrossings.length / MODAL_PAGE_SIZE))
   const pagedRailCrossings = filteredRailCrossings.slice(
-    (railPage - 1) * RAIL_PAGE_SIZE,
-    railPage * RAIL_PAGE_SIZE
+    (railPage - 1) * MODAL_PAGE_SIZE,
+    railPage * MODAL_PAGE_SIZE
   )
   const railSaveEnabled = !!selectedRailCrossing && railMaxSpeed.trim() !== "" && railDistance.trim() !== ""
   const closeRailModal = () => {
@@ -89,7 +126,107 @@ export default function ConfigureCrossingPage() {
     { id: "BT-002", location: "South Exit", type: "3rd Party", status: "Active", canEdit: false },
     { id: "OD-001", location: "East Origin", type: "Manual", status: "Active", canEdit: true },
     { id: "OD-002", location: "West Destination", type: "Manual", status: "Active", canEdit: true },
+    { id: "BT-003", location: "Gate A Sensor", type: "3rd Party", status: "Active", canEdit: false },
+    { id: "BT-004", location: "Gate B Sensor", type: "3rd Party", status: "Active", canEdit: false },
+    { id: "BT-005", location: "Approach North", type: "3rd Party", status: "Active", canEdit: false },
+    { id: "BT-006", location: "Approach South", type: "3rd Party", status: "Down", canEdit: false },
+    { id: "OD-003", location: "Parking Lot Entry", type: "Manual", status: "Active", canEdit: true },
+    { id: "OD-004", location: "Side Street Exit", type: "Manual", status: "Active", canEdit: true },
+    { id: "BT-007", location: "Crosswalk East", type: "3rd Party", status: "Active", canEdit: false },
+    { id: "BT-008", location: "Crosswalk West", type: "3rd Party", status: "Active", canEdit: false },
+    { id: "OD-005", location: "Industrial Access", type: "Manual", status: "Active", canEdit: true },
+    { id: "BT-009", location: "Platform Entry", type: "3rd Party", status: "Down", canEdit: false },
+    { id: "BT-010", location: "Platform Exit", type: "3rd Party", status: "Active", canEdit: false },
+    { id: "OD-006", location: "Bus Bay Origin", type: "Manual", status: "Active", canEdit: true },
+    { id: "BT-011", location: "Ticket Booth Sensor", type: "3rd Party", status: "Active", canEdit: false },
+    { id: "BT-012", location: "Emergency Access", type: "3rd Party", status: "Active", canEdit: false },
+    { id: "OD-007", location: "Freight Dock Entry", type: "Manual", status: "Active", canEdit: true },
+    { id: "BT-013", location: "Signal Preempt Node", type: "3rd Party", status: "Active", canEdit: false },
   ]
+
+  const railTabRows = [
+    { segment: "620873A → 620872B", location: "Main St & Railway", maxSpeed: "80", distance: "1500" },
+    { segment: "273062B → 620872B", location: "Breakers Drive", maxSpeed: "95", distance: "2200" },
+    { segment: "273057E → 620872B", location: "Flagler Center Blvd", maxSpeed: "110", distance: "3100" },
+    { segment: "272938M → 620872B", location: "Kenan Drive", maxSpeed: "80", distance: "1800" },
+    { segment: "271831G → 620872B", location: "Race Track Rd", maxSpeed: "90", distance: "2600" },
+    { segment: "271816E → 620872B", location: "Atlantic Blvd", maxSpeed: "105", distance: "3400" },
+    { segment: "621188U → 620872B", location: "Soutel Dr", maxSpeed: "80", distance: "1200" },
+    { segment: "271824W → 620872B", location: "Sunbeam Rd", maxSpeed: "95", distance: "2900" },
+    { segment: "271829F → 620872B", location: "Greenland Rd", maxSpeed: "80", distance: "1700" },
+    { segment: "273099A → 620872B", location: "Main Street Miami", maxSpeed: "110", distance: "4100" },
+    { segment: "273100B → 620872B", location: "Biscayne Blvd", maxSpeed: "90", distance: "3700" },
+    { segment: "274011C → 620872B", location: "Blanding Blvd", maxSpeed: "80", distance: "2100" },
+    { segment: "274022D → 620872B", location: "Collins Rd", maxSpeed: "95", distance: "2800" },
+    { segment: "274033E → 620872B", location: "Beach Blvd", maxSpeed: "80", distance: "1600" },
+    { segment: "274044F → 620872B", location: "University Blvd", maxSpeed: "105", distance: "3000" },
+    { segment: "274055G → 620872B", location: "Baymeadows Rd", maxSpeed: "90", distance: "2500" },
+    { segment: "274066H → 620872B", location: "San Jose Blvd", maxSpeed: "80", distance: "1900" },
+    { segment: "274077J → 620872B", location: "Philips Hwy", maxSpeed: "95", distance: "2300" },
+    { segment: "274088K → 620872B", location: "Cassat Ave", maxSpeed: "80", distance: "1400" },
+    { segment: "274099L → 620872B", location: "Monument Rd", maxSpeed: "110", distance: "3800" },
+    { segment: "274100M → 620872B", location: "Merrill Rd", maxSpeed: "90", distance: "2700" },
+    { segment: "274111N → 620872B", location: "Normandy Blvd", maxSpeed: "80", distance: "2000" },
+  ]
+  const railTabTotalPages = Math.max(1, Math.ceil(railTabRows.length / TAB_PAGE_SIZE))
+  const pagedRailTabRows = railTabRows.slice((railTabPage - 1) * TAB_PAGE_SIZE, railTabPage * TAB_PAGE_SIZE)
+
+  const roadTabRows = [
+    { origin: "Main St (30.3285, -81.6558)", destination: "Oak Ave (30.3275, -81.6548)" },
+    { origin: "Heckscher Dr (30.3290, -81.6562)", destination: "Soutel Dr (30.3821, -81.7377)" },
+    { origin: "Atlantic Blvd (30.3066, -81.6498)", destination: "Baymeadows Rd (30.2185, -81.5623)" },
+    { origin: "Beach Blvd (30.2891, -81.5764)", destination: "University Blvd (30.3124, -81.5887)" },
+    { origin: "Blanding Blvd (30.1731, -81.7210)", destination: "Collins Rd (30.2045, -81.6932)" },
+    { origin: "San Jose Blvd (30.2312, -81.6201)", destination: "Philips Hwy (30.2744, -81.5963)" },
+    { origin: "Race Track Rd (30.1046, -81.4795)", destination: "Greenland Rd (30.1645, -81.5400)" },
+    { origin: "Sunbeam Rd (30.2061, -81.5788)", destination: "Monument Rd (30.3367, -81.5198)" },
+    { origin: "Cassat Ave (30.2718, -81.7142)", destination: "Edgewood Ave (30.3214, -81.6789)" },
+    { origin: "Merrill Rd (30.3521, -81.5103)", destination: "Regency Sq Blvd (30.3498, -81.5311)" },
+    { origin: "Normandy Blvd (30.3012, -81.6645)", destination: "103rd St (30.2891, -81.7023)" },
+    { origin: "Hammond Blvd (30.3187, -81.7356)", destination: "Lane Ave (30.2654, -81.7891)" },
+    { origin: "Argyle Forest Blvd (30.1634, -81.7845)", destination: "Bichara Blvd (30.1598, -81.7921)" },
+    { origin: "Timuquana Rd (30.2456, -81.7634)", destination: "Wilson Blvd (30.2311, -81.7512)" },
+    { origin: "Commonwealth Ave (30.3654, -81.6234)", destination: "Alt 19 (30.3789, -81.6012)" },
+    { origin: "Lenoir Ave (30.3145, -81.6789)", destination: "Main St N (30.3267, -81.6534)" },
+    { origin: "Plymouth St (30.2987, -81.6912)", destination: "Dunn Ave (30.3823, -81.7145)" },
+    { origin: "Baymeadows Rd (30.2189, -81.5633)", destination: "I-95 NB Ramp (30.2201, -81.5589)" },
+    { origin: "103rd St & Ramona Blvd (30.2845, -81.7234)", destination: "Blanding Blvd N (30.2978, -81.7312)" },
+    { origin: "University Blvd S (30.3089, -81.5901)", destination: "St Johns Bluff Rd (30.3156, -81.5723)" },
+    { origin: "Old St Augustine Rd (30.2123, -81.6034)", destination: "San Marco Blvd (30.3012, -81.6589)" },
+    { origin: "Soutel Dr W (30.3834, -81.7401)", destination: "Commonwealth Ave N (30.3712, -81.7289)" },
+  ]
+  const roadTabTotalPages = Math.max(1, Math.ceil(roadTabRows.length / TAB_PAGE_SIZE))
+  const pagedRoadTabRows = roadTabRows.slice((roadTabPage - 1) * TAB_PAGE_SIZE, roadTabPage * TAB_PAGE_SIZE)
+
+  const btTabTotalPages = Math.max(1, Math.ceil(bluetoothSensors.length / TAB_PAGE_SIZE))
+  const pagedBtTabRows = bluetoothSensors.slice((btTabPage - 1) * TAB_PAGE_SIZE, btTabPage * TAB_PAGE_SIZE)
+
+  const bellTabRows = [
+    { bellType: "B01", bellCode: "1", freq: "2024", power: "5" },
+    { bellType: "B01", bellCode: "1", freq: "2029", power: "5" },
+    { bellType: "B20", bellCode: "2", freq: "1970", power: "6" },
+    { bellType: "B20", bellCode: "2", freq: "2665", power: "6" },
+    { bellType: "B20", bellCode: "2", freq: "3413", power: "6" },
+    { bellType: "B42", bellCode: "3", freq: "2379", power: "4" },
+    { bellType: "B42", bellCode: "3", freq: "2831", power: "4" },
+    { bellType: "B43", bellCode: "4", freq: "1529", power: "7" },
+    { bellType: "B43", bellCode: "4", freq: "2143", power: "7" },
+    { bellType: "B21", bellCode: "5", freq: "1416", power: "5" },
+    { bellType: "B21", bellCode: "5", freq: "1911", power: "5" },
+    { bellType: "B21", bellCode: "5", freq: "2439", power: "5" },
+    { bellType: "B22", bellCode: "6", freq: "1443", power: "8" },
+    { bellType: "B22", bellCode: "6", freq: "1949", power: "8" },
+    { bellType: "B22", bellCode: "6", freq: "2132", power: "8" },
+    { bellType: "B44", bellCode: "7", freq: "1572", power: "6" },
+    { bellType: "B44", bellCode: "7", freq: "2186", power: "6" },
+    { bellType: "B44", bellCode: "7", freq: "2789", power: "6" },
+    { bellType: "B44", bellCode: "7", freq: "3435", power: "6" },
+    { bellType: "B45", bellCode: "8", freq: "1448", power: "5" },
+    { bellType: "B45", bellCode: "8", freq: "1934", power: "5" },
+    { bellType: "B46", bellCode: "9", freq: "2810", power: "4" },
+  ]
+  const bellTabTotalPages = Math.max(1, Math.ceil(bellTabRows.length / TAB_PAGE_SIZE))
+  const pagedBellTabRows = bellTabRows.slice((bellTabPage - 1) * TAB_PAGE_SIZE, bellTabPage * TAB_PAGE_SIZE)
 
   const dmsBoards = [
     { id: "DMS-001", name: "North Approach DMS", voltage: "12.4V", status: "Active", deviceId: "DMS-A1B2C3", vin: "1HGBH41JXMN109186", lat: "30.3285", long: "-81.6558", message: "TRAIN APPROACHING - EXPECT DELAYS" },
@@ -213,24 +350,27 @@ export default function ConfigureCrossingPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    <tr className="border-t border-border hover:bg-muted/30 transition">
-                      <td className="px-4 py-3 text-sm font-medium">620873A → 620872B</td>
-                      <td className="px-4 py-3 text-sm">Main St &amp; Railway</td>
-                      <td className="px-4 py-3 text-sm">80</td>
-                      <td className="px-4 py-3 text-sm">1500</td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center justify-center gap-1">
-                          <Button size="sm" variant="ghost" className="hover:bg-accent/10 text-accent" onClick={() => setShowEditRailSegment(true)}>
-                            <Edit size={16} />
-                          </Button>
-                          <Button size="sm" variant="ghost" className="hover:bg-red-100 text-red-600">
-                            <Trash2 size={16} />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
+                    {pagedRailTabRows.map((row, i) => (
+                      <tr key={i} className="border-t border-border hover:bg-muted/30 transition">
+                        <td className="px-4 py-3 text-sm font-medium">{row.segment}</td>
+                        <td className="px-4 py-3 text-sm">{row.location}</td>
+                        <td className="px-4 py-3 text-sm">{row.maxSpeed}</td>
+                        <td className="px-4 py-3 text-sm">{row.distance}</td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-center gap-1">
+                            <Button size="sm" variant="ghost" className="hover:bg-accent/10 text-accent" onClick={() => setShowEditRailSegment(true)}>
+                              <Edit size={16} />
+                            </Button>
+                            <Button size="sm" variant="ghost" className="hover:bg-red-100 text-red-600">
+                              <Trash2 size={16} />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
+                <TablePagination currentPage={railTabPage} totalPages={railTabTotalPages} onPageChange={setRailTabPage} />
               </div>
 
               {/* Edit Rail Segment Modal */}
@@ -398,51 +538,7 @@ export default function ConfigureCrossingPage() {
                       </div>
 
                       {/* Pagination */}
-                      {railTotalPages > 1 && (
-                        <div className="flex items-center justify-center gap-1 text-sm">
-                          <button
-                            className="px-2 py-1 text-muted-foreground hover:text-foreground transition disabled:opacity-40"
-                            disabled={railPage === 1}
-                            onClick={() => setRailPage(1)}
-                          >
-                            First
-                          </button>
-                          <button
-                            className="px-2 py-1 text-muted-foreground hover:text-foreground transition disabled:opacity-40"
-                            disabled={railPage === 1}
-                            onClick={() => setRailPage((p) => p - 1)}
-                          >
-                            ←
-                          </button>
-                          {Array.from({ length: railTotalPages }, (_, i) => i + 1).map((p) => (
-                            <button
-                              key={p}
-                              onClick={() => setRailPage(p)}
-                              className={`w-8 h-8 rounded-full text-sm transition ${
-                                p === railPage
-                                  ? "bg-accent text-white font-semibold"
-                                  : "text-muted-foreground hover:text-foreground"
-                              }`}
-                            >
-                              {p}
-                            </button>
-                          ))}
-                          <button
-                            className="px-2 py-1 text-muted-foreground hover:text-foreground transition disabled:opacity-40"
-                            disabled={railPage === railTotalPages}
-                            onClick={() => setRailPage((p) => p + 1)}
-                          >
-                            →
-                          </button>
-                          <button
-                            className="px-2 py-1 text-muted-foreground hover:text-foreground transition disabled:opacity-40"
-                            disabled={railPage === railTotalPages}
-                            onClick={() => setRailPage(railTotalPages)}
-                          >
-                            Last
-                          </button>
-                        </div>
-                      )}
+                      <TablePagination currentPage={railPage} totalPages={railTotalPages} onPageChange={setRailPage} />
 
                     </div>
 
@@ -495,17 +591,18 @@ export default function ConfigureCrossingPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    <tr className="border-t border-border hover:bg-muted/30 transition">
+                    {pagedRoadTabRows.map((row, i) => (
+                    <tr key={i} className="border-t border-border hover:bg-muted/30 transition">
                       <td className="px-4 py-3 text-sm">
                         <div className="flex items-center gap-2">
                           <span className="w-3 h-3 rounded-full bg-green-500 shrink-0"></span>
-                          Main St (30.3285, -81.6558)
+                          {row.origin}
                         </div>
                       </td>
                       <td className="px-4 py-3 text-sm">
                         <div className="flex items-center gap-2">
                           <span className="w-3 h-3 rounded-full bg-red-500 shrink-0"></span>
-                          Oak Ave (30.3275, -81.6548)
+                          {row.destination}
                         </div>
                       </td>
                       <td className="px-4 py-3 text-center">
@@ -514,8 +611,10 @@ export default function ConfigureCrossingPage() {
                         </Button>
                       </td>
                     </tr>
+                    ))}
                   </tbody>
                 </table>
+                <TablePagination currentPage={roadTabPage} totalPages={roadTabTotalPages} onPageChange={setRoadTabPage} />
               </div>
 
               {/* Add Road Segment Modal */}
@@ -639,7 +738,7 @@ export default function ConfigureCrossingPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {bluetoothSensors.map((sensor) => (
+                    {pagedBtTabRows.map((sensor) => (
                       <tr key={sensor.id} className="border-t border-border hover:bg-muted/30 transition">
                         <td className="px-4 py-3 text-sm font-medium">{sensor.id}</td>
                         <td className="px-4 py-3 text-sm">{sensor.location}</td>
@@ -681,6 +780,7 @@ export default function ConfigureCrossingPage() {
                     ))}
                   </tbody>
                 </table>
+                <TablePagination currentPage={btTabPage} totalPages={btTabTotalPages} onPageChange={setBtTabPage} />
               </div>
             </div>
           )}
@@ -910,7 +1010,7 @@ export default function ConfigureCrossingPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {[{ bellType: "B01", bellCode: "1", freq: "2024", power: "5" }, { bellType: "B01", bellCode: "1", freq: "2029", power: "5" }].map((row, i) => (
+                    {pagedBellTabRows.map((row, i) => (
                       <tr key={i} className="border-t border-border hover:bg-muted/30 transition">
                         <td className="px-4 py-3 text-sm">{row.bellType}</td>
                         <td className="px-4 py-3 text-sm">{row.bellCode}</td>
@@ -935,48 +1035,232 @@ export default function ConfigureCrossingPage() {
                     ))}
                   </tbody>
                 </table>
+                <TablePagination currentPage={bellTabPage} totalPages={bellTabTotalPages} onPageChange={setBellTabPage} />
               </div>
 
-              {/* Add Bell Config Modal */}
+              {/* Add Bell Config Modal — 2-step */}
               {showAddBellConfig && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                  <Card className="w-full max-w-md flex flex-col overflow-hidden">
-                    <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-b border-border">
-                      <h2 className="text-xl font-bold">Add Bell Configuration</h2>
-                      <Button variant="ghost" size="sm" onClick={() => setShowAddBellConfig(false)}>
-                        <X size={20} />
-                      </Button>
-                    </div>
-                    <div className="px-6 py-5 space-y-4">
-                      <div>
-                        <label className="text-sm font-medium block mb-2">Bell Type</label>
-                        <select className="w-full border border-border rounded-lg p-3 bg-background focus:outline-none focus:border-accent">
-                          <option value="">Select bell type...</option>
-                          <option value="B01">B01</option>
-                          <option value="B02">B02</option>
-                          <option value="B20">B20</option>
-                          <option value="B21">B21</option>
-                          <option value="B42">B42</option>
-                          <option value="B43">B43</option>
-                        </select>
+                  <Card className="w-full max-w-3xl max-h-[85vh] flex flex-col overflow-hidden">
+
+                    {/* Sticky header */}
+                    <div className="flex-shrink-0 px-6 pt-5 pb-0 border-b border-border">
+                      <div className="flex items-center justify-between mb-5">
+                        <h2 className="text-xl font-bold">Add Bell Configuration</h2>
+                        <Button variant="ghost" size="sm" onClick={closeAddBellModal}>
+                          <X size={20} />
+                        </Button>
                       </div>
-                      <div>
-                        <label className="text-sm font-medium block mb-2">Bell Code</label>
-                        <input type="text" placeholder="e.g., 44" className="w-full border border-border rounded-lg p-3 bg-background focus:outline-none focus:border-accent" />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium block mb-2">Frequency (Hz)</label>
-                        <input type="text" placeholder="e.g., 2024" className="w-full border border-border rounded-lg p-3 bg-background focus:outline-none focus:border-accent" />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium block mb-2">Power (dB)</label>
-                        <input type="text" placeholder="e.g., 5" className="w-full border border-border rounded-lg p-3 bg-background focus:outline-none focus:border-accent" />
+
+                      {/* Step indicator */}
+                      <div className="flex items-center justify-center mb-5">
+                        <div className="flex items-center gap-2">
+                          <div className="flex flex-col items-center gap-1">
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${addBellStep === 1 ? "bg-accent text-white" : "bg-gray-200 text-gray-500"}`}>1</div>
+                            <span className={`text-xs font-medium ${addBellStep === 1 ? "text-accent" : "text-muted-foreground"}`}>Select Bell</span>
+                          </div>
+                          <div className={`w-24 h-1 mb-4 ${addBellStep >= 2 ? "bg-accent" : "bg-gray-200"}`} />
+                          <div className="flex flex-col items-center gap-1">
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${addBellStep >= 2 ? "bg-accent text-white" : "bg-gray-200 text-gray-500"}`}>2</div>
+                            <span className={`text-xs font-medium ${addBellStep >= 2 ? "text-accent" : "text-muted-foreground"}`}>Add Frequency Bounds</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
+
+                    {/* Scrollable body */}
+                    <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+
+                      {/* ── STEP 1 ── */}
+                      {addBellStep === 1 && (
+                        <>
+                          {/* Controls row */}
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm font-medium">Total Bells: 47</p>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-muted-foreground">Search:</span>
+                              <input
+                                type="text"
+                                placeholder="Search here..."
+                                value={bellSearch}
+                                onChange={(e) => { setBellSearch(e.target.value); setBellPage(1) }}
+                                className="border border-border rounded-lg px-3 py-2 text-sm w-44 focus:outline-none focus:border-accent"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Bells table */}
+                          <div className="border border-border rounded-lg overflow-hidden">
+                            <table className="w-full">
+                              <thead className="bg-gray-100">
+                                <tr className="text-left text-sm">
+                                  <th className="px-4 py-3 font-semibold text-foreground">Bell Type</th>
+                                  <th className="px-4 py-3 font-semibold text-foreground">Bell Frequency (Hz)</th>
+                                  <th className="px-4 py-3 font-semibold text-foreground text-center">Action</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {pagedBells.length > 0 ? pagedBells.map((bell, i) => {
+                                  const isSelected = selectedBell === bell.type
+                                  return (
+                                    <tr key={bell.type} className={`border-t border-border hover:bg-muted/30 transition ${isSelected ? "bg-accent/5" : i % 2 !== 0 ? "bg-muted/10" : ""}`}>
+                                      <td className="px-4 py-3 text-sm font-medium text-accent">{bell.type}</td>
+                                      <td className="px-4 py-3 text-sm text-muted-foreground">{bell.frequencies.join(" - ")}</td>
+                                      <td className="px-4 py-3 text-center">
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className={isSelected ? "text-green-600 hover:bg-green-100" : "text-accent hover:bg-accent/10"}
+                                          onClick={() => setSelectedBell(isSelected ? null : bell.type)}
+                                        >
+                                          <ThumbsUp size={18} />
+                                        </Button>
+                                      </td>
+                                    </tr>
+                                  )
+                                }) : (
+                                  <tr><td colSpan={3} className="px-4 py-8 text-center text-muted-foreground text-sm">No bells found.</td></tr>
+                                )}
+                              </tbody>
+                            </table>
+                          </div>
+
+                          {/* Pagination */}
+                          <TablePagination currentPage={bellPage} totalPages={bellTotalPages} onPageChange={setBellPage} />
+                        </>
+                      )}
+
+                      {/* ── STEP 2 ── */}
+                      {addBellStep === 2 && selectedBellData && (
+                        <>
+                          {/* Frequency range preview */}
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="text-xs text-muted-foreground block mb-1">First Frequency</label>
+                              <input
+                                type="text"
+                                defaultValue={selectedBellData.frequencies[0]}
+                                className="w-full border-2 border-cyan-400 rounded-lg p-3 bg-background focus:outline-none text-sm font-mono"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-xs text-muted-foreground block mb-1">Last Frequency</label>
+                              <input
+                                type="text"
+                                defaultValue={selectedBellData.frequencies[selectedBellData.frequencies.length - 1]}
+                                className="w-full border-2 border-rose-400 rounded-lg p-3 bg-background focus:outline-none text-sm font-mono"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Bell configuration card */}
+                          <Card className="p-4">
+                            <div className="flex items-center justify-between mb-3">
+                              <p className="font-medium">Bell Type: <span className="text-accent">{selectedBellData.type}</span></p>
+                              <button
+                                className="text-sm text-accent font-medium hover:text-accent/80 transition"
+                                onClick={() => setBellFreqRows(r => {
+                                  const padded = [...r]
+                                  while (padded.length < selectedBellData.frequencies.length) padded.push({ freq: "", power: "" })
+                                  return [...padded, { freq: "", power: "" }]
+                                })}
+                              >
+                                Add Frequency Bound +
+                              </button>
+                            </div>
+                            <div className="border border-border rounded-lg overflow-hidden">
+                              <table className="w-full">
+                                <thead className="bg-gray-100">
+                                  <tr className="text-left text-sm">
+                                    <th className="px-4 py-3 font-semibold text-accent">Frequency (Hz)</th>
+                                    <th className="px-4 py-3 font-semibold text-accent">Power (dB)</th>
+                                    <th className="px-4 py-3 font-semibold text-accent text-center">Action</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {selectedBellData.frequencies.map((freq, i) => (
+                                    <tr key={i} className="border-t border-border">
+                                      <td className="px-4 py-2">
+                                        <input type="text" defaultValue={freq} className="w-full border border-border rounded px-2 py-1 text-sm bg-background focus:outline-none focus:border-accent font-mono" />
+                                      </td>
+                                      <td className="px-4 py-2">
+                                        <input
+                                          type="text"
+                                          placeholder="e.g., 5"
+                                          value={bellFreqRows[i]?.power ?? ""}
+                                          onChange={e => setBellFreqRows(rows => {
+                                            const next = [...rows]
+                                            while (next.length <= i) next.push({ freq: "", power: "" })
+                                            next[i] = { ...next[i], power: e.target.value }
+                                            return next
+                                          })}
+                                          className="w-full border border-border rounded px-2 py-1 text-sm bg-background focus:outline-none focus:border-accent"
+                                        />
+                                      </td>
+                                      <td className="px-4 py-2 text-center">
+                                        <Button size="sm" variant="ghost" className="hover:bg-red-100 text-red-600">
+                                          <Trash2 size={16} />
+                                        </Button>
+                                      </td>
+                                    </tr>
+                                  ))}
+                                  {bellFreqRows.slice(selectedBellData.frequencies.length).map((row, i) => {
+                                    const idx = selectedBellData.frequencies.length + i
+                                    return (
+                                      <tr key={`extra-${i}`} className="border-t border-border">
+                                        <td className="px-4 py-2">
+                                          <input type="text" value={row.freq} onChange={e => setBellFreqRows(rows => { const next=[...rows]; next[idx]={...next[idx],freq:e.target.value}; return next })} placeholder="e.g., 2500" className="w-full border border-border rounded px-2 py-1 text-sm bg-background focus:outline-none focus:border-accent font-mono" />
+                                        </td>
+                                        <td className="px-4 py-2">
+                                          <input type="text" value={row.power} onChange={e => setBellFreqRows(rows => { const next=[...rows]; next[idx]={...next[idx],power:e.target.value}; return next })} placeholder="e.g., 5" className="w-full border border-border rounded px-2 py-1 text-sm bg-background focus:outline-none focus:border-accent" />
+                                        </td>
+                                        <td className="px-4 py-2 text-center">
+                                          <Button size="sm" variant="ghost" className="hover:bg-red-100 text-red-600" onClick={() => setBellFreqRows(rows => rows.filter((_, ri) => ri !== idx))}>
+                                            <Trash2 size={16} />
+                                          </Button>
+                                        </td>
+                                      </tr>
+                                    )
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
+                          </Card>
+                        </>
+                      )}
+
+                    </div>
+
+                    {/* Sticky footer */}
                     <div className="flex-shrink-0 flex justify-end gap-3 px-6 py-4 border-t border-border">
-                      <Button variant="outline" onClick={() => setShowAddBellConfig(false)}>Cancel</Button>
-                      <Button className="bg-accent hover:bg-accent/90 text-white" onClick={() => setShowAddBellConfig(false)}>Save Bell Config</Button>
+                      {addBellStep === 1 ? (
+                        <>
+                          <Button variant="outline" onClick={closeAddBellModal}>Close</Button>
+                          <Button
+                            className="bg-accent hover:bg-accent/90 text-white"
+                            disabled={!selectedBell}
+                            onClick={() => { setBellFreqRows([]); setAddBellStep(2) }}
+                          >
+                            Next
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button variant="outline" onClick={() => setAddBellStep(1)}>Back</Button>
+                          <Button
+                            className="bg-accent hover:bg-accent/90 text-white"
+                            disabled={
+                              !selectedBellData ||
+                              selectedBellData.frequencies.some((_, i) => !(bellFreqRows[i]?.power?.trim()))
+                            }
+                            onClick={closeAddBellModal}
+                          >
+                            Save Bell Config
+                          </Button>
+                        </>
+                      )}
                     </div>
+
                   </Card>
                 </div>
               )}

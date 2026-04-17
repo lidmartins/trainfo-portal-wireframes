@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Search, RefreshCw, ChevronRight } from "lucide-react"
 import { useState } from "react"
 import { useParams, useRouter } from "next/navigation"
+import { TablePagination } from "@/components/ui/table-pagination"
 
 // ─── Data helpers ─────────────────────────────────────────────────────────────
 
@@ -44,7 +45,7 @@ const sensors = [
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-const PAGE_SIZE = 50
+const PAGE_SIZE = 15
 
 export default function SensorHeartbeatPage() {
   const params = useParams()
@@ -255,32 +256,7 @@ export default function SensorHeartbeatPage() {
           )}
         </div>
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between pt-2">
-            <p className="text-sm text-muted-foreground">
-              Page {currentPage} of {totalPages} &middot; showing {paginatedHeartbeats.length} of {filteredHeartbeats.length} records
-            </p>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage((p) => p - 1)}
-              >
-                Previous
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage((p) => p + 1)}
-              >
-                Next
-              </Button>
-            </div>
-          </div>
-        )}
+        <TablePagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
 
       </div>
 

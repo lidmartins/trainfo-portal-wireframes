@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Search, Download, RefreshCw, Volume2, Film, FileCode, ChevronRight } from "lucide-react"
 import { useState } from "react"
+import { TablePagination } from "@/components/ui/table-pagination"
 import { useParams, useRouter } from "next/navigation"
 
 // ─── Data helpers (moved as-is from sensors page) ────────────────────────────
@@ -12,7 +13,7 @@ import { useParams, useRouter } from "next/navigation"
 const generateMockFiles = (sensorId: string, type: "logs" | "video" | "audio") => {
   const baseDate = new Date("2026-03-02")
   const files = []
-  const count = type === "logs" ? 15 : type === "video" ? 8 : 5
+  const count = type === "logs" ? 23 : type === "video" ? 16 : 13
   const ext = type === "logs" ? "zip" : type === "video" ? "mp4" : "wav"
   const sizeRange = type === "logs" ? [15, 40] : type === "video" ? [50, 200] : [5, 25]
 
@@ -49,6 +50,8 @@ const sensors = [
 
 // ─── Page ────────────────────────────────────────────────────────────────────
 
+const PAGE_SIZE = 15
+
 export default function SensorFilesPage() {
   const params = useParams()
   const router = useRouter()
@@ -65,11 +68,19 @@ export default function SensorFilesPage() {
 
   const [fileType, setFileType] = useState<"logs" | "video" | "audio">("logs")
   const [fileSearchTerm, setFileSearchTerm] = useState("")
+  const [logsPage, setLogsPage] = useState(1)
+  const [videoPage, setVideoPage] = useState(1)
+  const [audioPage, setAudioPage] = useState(1)
+
+  const currentPage = fileType === "logs" ? logsPage : fileType === "video" ? videoPage : audioPage
+  const setCurrentPage = fileType === "logs" ? setLogsPage : fileType === "video" ? setVideoPage : setAudioPage
 
   const currentFiles = generateMockFiles(sensorId, fileType)
   const filteredFiles = currentFiles.filter((f) =>
     f.name.toLowerCase().includes(fileSearchTerm.toLowerCase())
   )
+  const filesTotalPages = Math.max(1, Math.ceil(filteredFiles.length / PAGE_SIZE))
+  const pagedFiles = filteredFiles.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
 
   const tabs: { id: "logs" | "video" | "audio"; label: string; Icon: typeof FileCode }[] = [
     { id: "logs",  label: "Logs",  Icon: FileCode },
@@ -155,7 +166,7 @@ export default function SensorFilesPage() {
           {tabs.map(({ id, label, Icon }) => (
             <button
               key={id}
-              onClick={() => { setFileType(id); setFileSearchTerm("") }}
+              onClick={() => { setFileType(id); setFileSearchTerm(""); setLogsPage(1); setVideoPage(1); setAudioPage(1) }}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition ${
                 fileType === id
                   ? "bg-accent text-white"
@@ -176,7 +187,7 @@ export default function SensorFilesPage() {
               type="text"
               placeholder="Search files..."
               value={fileSearchTerm}
-              onChange={(e) => setFileSearchTerm(e.target.value)}
+              onChange={(e) => { setFileSearchTerm(e.target.value); setCurrentPage(1) }}
               className="w-full pl-10 pr-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:border-accent"
             />
           </div>
@@ -201,7 +212,7 @@ export default function SensorFilesPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredFiles.map((file, index) => (
+              {pagedFiles.map((file, index) => (
                 <tr
                   key={file.id}
                   className={`border-t border-border hover:bg-muted/30 transition ${
@@ -259,6 +270,7 @@ export default function SensorFilesPage() {
               No {fileType} files found.
             </div>
           )}
+          <TablePagination currentPage={currentPage} totalPages={filesTotalPages} onPageChange={setCurrentPage} />
         </div>
 
       </div>

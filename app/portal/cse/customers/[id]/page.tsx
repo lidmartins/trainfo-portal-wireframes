@@ -5,12 +5,16 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Edit, Trash2, Settings, MapPin, Plus, X, Eye, Monitor, Radio, Upload, KeyRound, RefreshCw, AlertTriangle, FileText, Navigation, ThumbsUp, Check, MapPinned, ChevronRight, ExternalLink } from "lucide-react"
 import { useState } from "react"
+import { TablePagination } from "@/components/ui/table-pagination"
 import { useRouter } from "next/navigation"
 import RightLeftIcon from "@/components/icons/RightLeftIcon"
+
+const PAGE_SIZE = 15
 
 export default function CustomerDetailPage() {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState("crossings")
+  const [crossingsPage, setCrossingsPage] = useState(1)
   const [showReportModal, setShowReportModal] = useState(false)
   const [showPasswordModal, setShowPasswordModal] = useState(false)
   const [showOnboardModal, setShowOnboardModal] = useState(false)
@@ -77,8 +81,33 @@ export default function CustomerDetailPage() {
   const [editingLocationName, setEditingLocationName] = useState("")
   const [showShippingModal, setShowShippingModal] = useState(false)
 
-  const [crossingsList, setCrossingsList] = useState([{ id: "620872B", location: "Heckscher Dr", type: "Crossing Status", status: "Active", sensorId: "TAS2BCE03" }])
+  const [crossingsList, setCrossingsList] = useState([
+    { id: "620872B", location: "Heckscher Dr", type: "Crossing Status", status: "Active", sensorId: "TAS2BCE03" },
+    { id: "273062B", location: "Breakers Drive", type: "Crossing Status", status: "Active", sensorId: "341" },
+    { id: "273057E", location: "Flagler Center Blvd", type: "Crossing Status", status: "Active", sensorId: "342" },
+    { id: "272938M", location: "Kenan Drive", type: "Crossing Status", status: "Active", sensorId: "489" },
+    { id: "271831G", location: "Race Track Rd", type: "Crossing Status", status: "Active", sensorId: "512" },
+    { id: "271816E", location: "Atlantic Blvd", type: "Crossing Status", status: "Down", sensorId: "TAS3ACF01" },
+    { id: "621188U", location: "Soutel Dr", type: "Crossing Status", status: "Active", sensorId: "TAS3ACF02" },
+    { id: "271824W", location: "Sunbeam Rd", type: "Crossing Status", status: "Active", sensorId: "601" },
+    { id: "271829F", location: "Greenland Rd", type: "Crossing Status", status: "Active", sensorId: "602" },
+    { id: "273099A", location: "Main Street", type: "Crossing Status", status: "Active", sensorId: "778" },
+    { id: "273100B", location: "Biscayne Blvd", type: "Crossing Status", status: "Active", sensorId: "779" },
+    { id: "274011C", location: "Blanding Blvd", type: "Pre-emption", status: "Active", sensorId: "830" },
+    { id: "274022D", location: "Collins Rd", type: "Pre-emption", status: "Active", sensorId: "831" },
+    { id: "274033E", location: "Beach Blvd", type: "Crossing Status", status: "Down", sensorId: "TAS4BDE05" },
+    { id: "274044F", location: "University Blvd", type: "Crossing Status", status: "Active", sensorId: "TAS4BDE06" },
+    { id: "274055G", location: "Baymeadows Rd", type: "Pre-emption", status: "Active", sensorId: "944" },
+    { id: "274066H", location: "San Jose Blvd", type: "Crossing Status", status: "Active", sensorId: "945" },
+    { id: "274077J", location: "Philips Hwy", type: "Crossing Status", status: "Active", sensorId: "1023" },
+    { id: "274088K", location: "Cassat Ave", type: "Pre-emption", status: "Active", sensorId: "1024" },
+    { id: "274099L", location: "Monument Rd", type: "Crossing Status", status: "Active", sensorId: "1205" },
+    { id: "274100M", location: "Merrill Rd", type: "Crossing Status", status: "Down", sensorId: "1206" },
+    { id: "274111N", location: "Normandy Blvd", type: "Pre-emption", status: "Active", sensorId: "TAS5CEG07" },
+  ])
   const crossings = crossingsList
+  const crossingsTotalPages = Math.max(1, Math.ceil(crossings.length / PAGE_SIZE))
+  const pagedCrossings = crossings.slice((crossingsPage - 1) * PAGE_SIZE, crossingsPage * PAGE_SIZE)
 
   const handleSaveLocationName = (crossingId: string) => {
     setCrossingsList(prev => prev.map(c => 
@@ -548,7 +577,7 @@ export default function CustomerDetailPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {crossings.map((crossing) => (
+                  {pagedCrossings.map((crossing) => (
                     <tr key={crossing.id} className="border-b border-border hover:bg-muted/50 transition">
                       <td className="py-4 font-medium text-accent">{crossing.id}</td>
                       <td className="py-4 font-mono text-sm">{crossing.sensorId}</td>
@@ -634,6 +663,7 @@ export default function CustomerDetailPage() {
                 </tbody>
               </table>
             </div>
+            <TablePagination currentPage={crossingsPage} totalPages={crossingsTotalPages} onPageChange={setCrossingsPage} />
           </Card>
         )}
 
