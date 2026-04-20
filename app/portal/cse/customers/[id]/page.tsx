@@ -1297,7 +1297,7 @@ export default function CustomerDetailPage() {
                       )}
                     </div>
                     <h2 className="text-xl font-bold">
-                      {confirmModal.type === 'decommission' ? 'Decommission' : 'Replace Sensor'} - {confirmModal.crossing.id}
+                      {confirmModal.type === 'decommission' ? 'Remove Crossing' : 'Replace Sensor'} - {confirmModal.crossing.id}
                     </h2>
                   </div>
                   <Button variant="ghost" size="sm" onClick={() => setConfirmModal({ open: false, type: null, crossing: null })}>
@@ -1309,11 +1309,11 @@ export default function CustomerDetailPage() {
                   <>
                     <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
                       <p className="text-sm text-orange-800">
-                        <strong>Warning:</strong> Decommissioning this crossing will disable the sensor and stop all data collection. Historical data will be preserved.
+                        <strong>Warning:</strong> This will remove this crossing from the customer's account. The sensor will continue operating and collecting data normally. Only the association with this customer will be deleted.
                       </p>
                     </div>
                     <p className="text-sm text-muted-foreground mb-4">
-                      To confirm, please type the crossing ID <strong>{confirmModal.crossing.id}</strong> below:
+                      To confirm, please type the Crossing ID <strong>{confirmModal.crossing.id}</strong> below:
                     </p>
                   </>
                 ) : (
@@ -1335,7 +1335,7 @@ export default function CustomerDetailPage() {
 
                 <input
                   type="text"
-                  placeholder="Type crossing ID to confirm"
+                  placeholder="Type Crossing ID to confirm"
                   value={confirmText}
                   onChange={(e) => setConfirmText(e.target.value)}
                   className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:border-accent mb-4"
@@ -1349,7 +1349,7 @@ export default function CustomerDetailPage() {
                     className={`flex-1 ${confirmModal.type === 'decommission' ? 'bg-orange-600 hover:bg-orange-700' : 'bg-blue-600 hover:bg-blue-700'} text-white`}
                     disabled={confirmText !== confirmModal.crossing.id}
                   >
-                    {confirmModal.type === 'decommission' ? 'Decommission' : 'Replace Sensor'}
+                    {confirmModal.type === 'decommission' ? 'Remove Crossing' : 'Replace Sensor'}
                   </Button>
                 </div>
               </div>

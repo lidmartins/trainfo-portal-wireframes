@@ -3,7 +3,7 @@
 import PortalLayout from "@/components/portal-layout"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Edit, Trash2, Settings, MapPin, Plus, Navigation, Monitor, Radio, FileText, ChevronRight, X, ThumbsUp } from "lucide-react"
+import { Edit, Trash2, Settings, MapPin, Plus, Navigation, Monitor, Radio, FileText, ChevronRight, X, ThumbsUp, AlertTriangle } from "lucide-react"
 import { useState } from "react"
 import { TablePagination } from "@/components/ui/table-pagination"
 import { useParams, useRouter } from "next/navigation"
@@ -69,6 +69,11 @@ export default function ConfigureCrossingPage() {
   const [railPage, setRailPage] = useState(1)
   const [showDmsLogsModal, setShowDmsLogsModal] = useState<{ open: boolean; dms: any }>({ open: false, dms: null })
   const [showSetLocationModal, setShowSetLocationModal] = useState<{ open: boolean; beacon: any }>({ open: false, beacon: null })
+  const [decommissionModal, setDecommissionModal] = useState<{ open: boolean; sensorId: string }>({ open: false, sensorId: "" })
+  const [decommissionInput, setDecommissionInput] = useState("")
+  const [deleteRailModal, setDeleteRailModal] = useState<{ open: boolean; segment: string; startId: string; input: string }>({ open: false, segment: "", startId: "", input: "" })
+  const [deleteRoadModal, setDeleteRoadModal] = useState<{ open: boolean; origin: string; destination: string }>({ open: false, origin: "", destination: "" })
+  const [editBtModal, setEditBtModal] = useState<{ open: boolean; sensor: any; powerType: string }>({ open: false, sensor: null, powerType: "" })
 
   // Crossing data derived from crossingId param
   const crossingsList = [
@@ -361,7 +366,7 @@ export default function ConfigureCrossingPage() {
                             <Button size="sm" variant="ghost" className="hover:bg-accent/10 text-accent" onClick={() => setShowEditRailSegment(true)}>
                               <Edit size={16} />
                             </Button>
-                            <Button size="sm" variant="ghost" className="hover:bg-red-100 text-red-600">
+                            <Button size="sm" variant="ghost" className="hover:bg-red-100 text-red-600" onClick={() => setDeleteRailModal({ open: true, segment: row.segment, startId: row.segment.split(" → ")[0], input: "" })}>
                               <Trash2 size={16} />
                             </Button>
                           </div>
@@ -372,6 +377,52 @@ export default function ConfigureCrossingPage() {
                 </table>
                 <TablePagination currentPage={railTabPage} totalPages={railTabTotalPages} onPageChange={setRailTabPage} />
               </div>
+
+              {/* Delete Rail Segment Modal */}
+              {deleteRailModal.open && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                  <Card className="w-full max-w-md flex flex-col overflow-hidden">
+                    <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-b border-border">
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle size={20} className="text-orange-500" />
+                        <h2 className="text-lg font-bold">Delete Rail Segment — {deleteRailModal.segment}</h2>
+                      </div>
+                      <Button variant="ghost" size="sm" onClick={() => setDeleteRailModal({ open: false, segment: "", startId: "", input: "" })}>
+                        <X size={20} />
+                      </Button>
+                    </div>
+                    <div className="px-6 py-5 space-y-4">
+                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 text-sm text-orange-800">
+                        <strong>Warning:</strong> This will permanently delete this rail segment. Train speed and distance data for this segment will be removed from this crossing configuration.
+                      </div>
+                      <div>
+                        <p className="text-sm text-foreground mb-3">
+                          To confirm, please type the Segment ID <span className="font-mono font-semibold">{deleteRailModal.startId}</span> below:
+                        </p>
+                        <input
+                          type="text"
+                          placeholder="Type Segment ID to confirm"
+                          value={deleteRailModal.input}
+                          onChange={(e) => setDeleteRailModal(m => ({ ...m, input: e.target.value }))}
+                          className="w-full border border-border rounded-lg p-3 bg-background focus:outline-none focus:border-orange-400 text-sm"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex-shrink-0 flex justify-end gap-3 px-6 py-4 border-t border-border">
+                      <Button variant="outline" onClick={() => setDeleteRailModal({ open: false, segment: "", startId: "", input: "" })}>
+                        Cancel
+                      </Button>
+                      <Button
+                        className="bg-orange-500 hover:bg-orange-600 text-white disabled:opacity-40"
+                        disabled={deleteRailModal.input !== deleteRailModal.startId}
+                        onClick={() => setDeleteRailModal({ open: false, segment: "", startId: "", input: "" })}
+                      >
+                        Delete Segment
+                      </Button>
+                    </div>
+                  </Card>
+                </div>
+              )}
 
               {/* Edit Rail Segment Modal */}
               {showEditRailSegment && (
@@ -606,7 +657,7 @@ export default function ConfigureCrossingPage() {
                         </div>
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <Button size="sm" variant="ghost" className="hover:bg-red-100 text-red-600">
+                        <Button size="sm" variant="ghost" className="hover:bg-red-100 text-red-600" onClick={() => setDeleteRoadModal({ open: true, origin: row.origin, destination: row.destination })}>
                           <Trash2 size={16} />
                         </Button>
                       </td>
@@ -616,6 +667,42 @@ export default function ConfigureCrossingPage() {
                 </table>
                 <TablePagination currentPage={roadTabPage} totalPages={roadTabTotalPages} onPageChange={setRoadTabPage} />
               </div>
+
+              {/* Delete Road Segment Modal */}
+              {deleteRoadModal.open && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                  <Card className="w-full max-w-md flex flex-col overflow-hidden">
+                    <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-b border-border">
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle size={20} className="text-orange-500" />
+                        <h2 className="text-lg font-bold">Delete Road Segment</h2>
+                      </div>
+                      <Button variant="ghost" size="sm" onClick={() => setDeleteRoadModal({ open: false, origin: "", destination: "" })}>
+                        <X size={20} />
+                      </Button>
+                    </div>
+                    <div className="px-6 py-5 space-y-4">
+                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 text-sm text-orange-800">
+                        <strong>Warning:</strong> This will permanently delete this road segment. The Origin and Destination points will be removed from this crossing configuration.
+                      </div>
+                      <p className="text-sm text-foreground">
+                        Are you sure you want to delete the segment from <span className="font-medium">{deleteRoadModal.origin}</span> to <span className="font-medium">{deleteRoadModal.destination}</span>?
+                      </p>
+                    </div>
+                    <div className="flex-shrink-0 flex justify-end gap-3 px-6 py-4 border-t border-border">
+                      <Button variant="outline" onClick={() => setDeleteRoadModal({ open: false, origin: "", destination: "" })}>
+                        Cancel
+                      </Button>
+                      <Button
+                        className="bg-orange-500 hover:bg-orange-600 text-white"
+                        onClick={() => setDeleteRoadModal({ open: false, origin: "", destination: "" })}
+                      >
+                        Delete Segment
+                      </Button>
+                    </div>
+                  </Card>
+                </div>
+              )}
 
               {/* Add Road Segment Modal */}
               {showAddRoadSegment && (
@@ -760,20 +847,22 @@ export default function ConfigureCrossingPage() {
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center justify-center gap-2">
-                            {sensor.canEdit ? (
-                              <>
-                                <Button size="sm" variant="ghost" className="hover:bg-accent/10 text-accent">
-                                  <Edit size={16} />
-                                </Button>
-                                <Button size="sm" variant="ghost" className="hover:bg-red-100 text-red-600">
-                                  Decommission
-                                </Button>
-                              </>
-                            ) : (
-                              <Button size="sm" variant="ghost" className="hover:bg-red-100 text-red-600">
-                                Decommission
-                              </Button>
-                            )}
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className={sensor.canEdit ? "hover:bg-accent/10 text-accent" : "text-accent opacity-30 cursor-not-allowed hover:bg-transparent"}
+                              onClick={sensor.canEdit ? () => setEditBtModal({ open: true, sensor, powerType: "" }) : undefined}
+                            >
+                              <Edit size={16} />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="hover:bg-red-100 text-red-600"
+                              onClick={() => { setDecommissionModal({ open: true, sensorId: sensor.id }); setDecommissionInput("") }}
+                            >
+                              <Trash2 size={16} />
+                            </Button>
                           </div>
                         </td>
                       </tr>
@@ -782,6 +871,133 @@ export default function ConfigureCrossingPage() {
                 </table>
                 <TablePagination currentPage={btTabPage} totalPages={btTabTotalPages} onPageChange={setBtTabPage} />
               </div>
+
+              {/* Edit Bluetooth Sensor Modal */}
+              {editBtModal.open && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                  <Card className="w-full max-w-md flex flex-col overflow-hidden">
+
+                    {/* Header */}
+                    <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-b border-border">
+                      <h2 className="text-xl font-bold">Edit Bluetooth Sensor</h2>
+                      <Button variant="ghost" size="sm" onClick={() => setEditBtModal({ open: false, sensor: null, powerType: "" })}>
+                        <X size={20} />
+                      </Button>
+                    </div>
+
+                    {/* Body */}
+                    <div className="px-6 py-5 space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Sensor ID</label>
+                        <input
+                          type="text"
+                          value={editBtModal.sensor?.id ?? ""}
+                          disabled
+                          className="w-full border border-border rounded-lg p-3 bg-muted text-muted-foreground"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Location</label>
+                        <input
+                          type="text"
+                          value={editBtModal.sensor?.location ?? ""}
+                          disabled
+                          className="w-full border border-border rounded-lg p-3 bg-muted text-muted-foreground"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">
+                          Power Type<span className="text-red-500 ml-0.5">*</span>
+                        </label>
+                        <select
+                          value={editBtModal.powerType}
+                          onChange={(e) => setEditBtModal(m => ({ ...m, powerType: e.target.value }))}
+                          className="w-full border border-border rounded-lg p-3 bg-background focus:outline-none focus:border-accent text-sm"
+                        >
+                          <option value="" disabled>Select power type</option>
+                          <option value="Direct Power">Direct Power</option>
+                          <option value="Solar">Solar</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="flex-shrink-0 flex justify-end gap-3 px-6 py-4 border-t border-border">
+                      <Button variant="outline" onClick={() => setEditBtModal({ open: false, sensor: null, powerType: "" })}>
+                        Cancel
+                      </Button>
+                      <Button
+                        className="bg-accent hover:bg-accent/90 text-white"
+                        disabled={!editBtModal.powerType}
+                        onClick={() => setEditBtModal({ open: false, sensor: null, powerType: "" })}
+                      >
+                        Save
+                      </Button>
+                    </div>
+
+                  </Card>
+                </div>
+              )}
+
+              {/* Decommission Sensor Confirmation Modal */}
+              {decommissionModal.open && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                  <Card className="w-full max-w-md flex flex-col overflow-hidden">
+
+                    {/* Header */}
+                    <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-b border-border">
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle size={20} className="text-orange-500" />
+                        <h2 className="text-lg font-bold">Remove Sensor — {decommissionModal.sensorId}</h2>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setDecommissionModal({ open: false, sensorId: "" })}
+                      >
+                        <X size={20} />
+                      </Button>
+                    </div>
+
+                    {/* Body */}
+                    <div className="px-6 py-5 space-y-4">
+                      {/* Warning box */}
+                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 text-sm text-orange-800">
+                        <strong>Warning:</strong> This will unlink the sensor from this crossing. The sensor will no longer collect data for this customer's crossing. The sensor itself will not be deleted.
+                      </div>
+
+                      {/* Confirmation input */}
+                      <div>
+                        <p className="text-sm text-foreground mb-3">
+                          To confirm, please type the Sensor ID <span className="font-mono font-semibold">{decommissionModal.sensorId}</span> below:
+                        </p>
+                        <input
+                          type="text"
+                          placeholder="Type Sensor ID to confirm"
+                          value={decommissionInput}
+                          onChange={(e) => setDecommissionInput(e.target.value)}
+                          className="w-full border border-border rounded-lg p-3 bg-background focus:outline-none focus:border-orange-400 text-sm"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="flex-shrink-0 flex justify-end gap-3 px-6 py-4 border-t border-border">
+                      <Button variant="outline" onClick={() => setDecommissionModal({ open: false, sensorId: "" })}>
+                        Cancel
+                      </Button>
+                      <Button
+                        className="bg-orange-500 hover:bg-orange-600 text-white disabled:opacity-40"
+                        disabled={decommissionInput !== decommissionModal.sensorId}
+                        onClick={() => setDecommissionModal({ open: false, sensorId: "" })}
+                      >
+                        Remove Sensor
+                      </Button>
+                    </div>
+
+                  </Card>
+                </div>
+              )}
             </div>
           )}
 
