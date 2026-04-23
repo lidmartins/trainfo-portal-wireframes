@@ -211,23 +211,21 @@ export default function SensorHeartbeatPage() {
         {/* Heartbeat table */}
         <div className="border border-border rounded-lg overflow-hidden">
           <table className="w-full">
-            <thead className="bg-muted border-b border-border">
+            <thead className="bg-gray-100">
               <tr className="text-left text-sm">
-                <th className="px-4 py-3 font-semibold text-accent">Date</th>
-                <th className="px-4 py-3 font-semibold text-accent">Time</th>
-                <th className="px-4 py-3 font-semibold text-accent text-center">Voltage (V)</th>
-                <th className="px-4 py-3 font-semibold text-accent text-center">CPU Usage (%)</th>
-                <th className="px-4 py-3 font-semibold text-accent text-center">RAM Usage (%)</th>
-                <th className="px-4 py-3 font-semibold text-accent text-center">Disk Usage (%)</th>
+                <th className="px-4 py-3 font-semibold">Date</th>
+                <th className="px-4 py-3 font-semibold">Time</th>
+                <th className="px-4 py-3 font-semibold text-center">Voltage (V)</th>
+                <th className="px-4 py-3 font-semibold text-center">CPU Usage (%)</th>
+                <th className="px-4 py-3 font-semibold text-center">RAM Usage (%)</th>
+                <th className="px-4 py-3 font-semibold text-center">Disk Usage (%)</th>
               </tr>
             </thead>
             <tbody>
               {paginatedHeartbeats.map((hb, index) => (
                 <tr
                   key={hb.id}
-                  className={`border-t border-border hover:bg-muted/30 transition ${
-                    index % 2 === 0 ? "bg-background" : "bg-muted/10"
-                  }`}
+                  className="border-t border-border hover:bg-muted/30 transition"
                 >
                   <td className="px-4 py-3 text-sm">{hb.date}</td>
                   <td className="px-4 py-3 text-sm font-mono">{hb.time}</td>
