@@ -25,7 +25,7 @@ import { Card } from "@/components/ui/card"
 import { useState } from "react"
 
 const sidebarItems = [
-  { icon: BarChart3, label: "Dashboard", href: "/portal" },
+  { icon: BarChart3, label: "Dashboard", href: "/portal", active: true },
   { icon: MapPin, label: "Map & Agents", href: "/portal/map" },
   { icon: FileText, label: "Studies & Planning", href: "/portal/studies" },
   { icon: Settings, label: "Signal Timing", href: "/portal/timing" },

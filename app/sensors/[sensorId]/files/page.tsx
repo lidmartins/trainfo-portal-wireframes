@@ -202,34 +202,32 @@ export default function SensorFilesPage() {
         {/* File table */}
         <div className="border border-border rounded-lg overflow-hidden">
           <table className="w-full">
-            <thead className="bg-muted border-b border-border">
+            <thead className="bg-gray-100">
               <tr className="text-left text-sm">
-                <th className="px-4 py-3 font-semibold">Name</th>
-                <th className="px-4 py-3 font-semibold text-right">Size</th>
-                <th className="px-4 py-3 font-semibold">Date</th>
-                <th className="px-4 py-3 font-semibold">Time</th>
-                <th className="px-4 py-3 font-semibold text-center">Actions</th>
+                <th className="px-4 py-3 font-semibold text-sm">Name</th>
+                <th className="px-4 py-3 font-semibold text-sm text-right">Size</th>
+                <th className="px-4 py-3 font-semibold text-sm">Date</th>
+                <th className="px-4 py-3 font-semibold text-sm">Time</th>
+                <th className="px-4 py-3 font-semibold text-sm text-center">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {pagedFiles.map((file, index) => (
+              {pagedFiles.map((file) => (
                 <tr
                   key={file.id}
-                  className={`border-t border-border hover:bg-muted/30 transition ${
-                    index % 2 === 0 ? "bg-background" : "bg-muted/10"
-                  }`}
+                  className="border-t border-border hover:bg-muted/30 transition"
                 >
-                  <td className="px-4 py-3">
-                    <span className="font-mono text-sm text-accent cursor-pointer hover:underline">
+                  <td className="px-4 py-3 text-sm">
+                    <span className="font-mono text-accent cursor-pointer hover:underline">
                       {file.name}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-right text-sm text-muted-foreground">
+                  <td className="px-4 py-3 text-sm text-right text-muted-foreground">
                     {file.size} KB
                   </td>
                   <td className="px-4 py-3 text-sm">{file.date}</td>
                   <td className="px-4 py-3 text-sm font-mono">{file.time}</td>
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 text-sm">
                     <div className="flex items-center justify-center gap-1">
                       <Button
                         size="sm"

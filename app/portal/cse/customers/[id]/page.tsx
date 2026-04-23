@@ -13,7 +13,7 @@ const PAGE_SIZE = 15
 
 export default function CustomerDetailPage() {
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState("crossings")
+  const [activeTab, setActiveTab] = useState("map")
   const [crossingsPage, setCrossingsPage] = useState(1)
   const [showReportModal, setShowReportModal] = useState(false)
   const [showPasswordModal, setShowPasswordModal] = useState(false)
@@ -79,31 +79,32 @@ export default function CustomerDetailPage() {
   const [showSetLocationModal, setShowSetLocationModal] = useState<{ open: boolean; beacon: any }>({ open: false, beacon: null })
   const [editingLocationId, setEditingLocationId] = useState<string | null>(null)
   const [editingLocationName, setEditingLocationName] = useState("")
+  const [editInfoTypeModal, setEditInfoTypeModal] = useState<{ open: boolean; crossingId: string; value: string } | null>(null)
   const [showShippingModal, setShowShippingModal] = useState(false)
 
   const [crossingsList, setCrossingsList] = useState([
-    { id: "620872B", location: "Heckscher Dr", type: "Crossing Status", status: "Active", sensorId: "TAS2BCE03" },
-    { id: "273062B", location: "Breakers Drive", type: "Crossing Status", status: "Active", sensorId: "341" },
-    { id: "273057E", location: "Flagler Center Blvd", type: "Crossing Status", status: "Active", sensorId: "342" },
-    { id: "272938M", location: "Kenan Drive", type: "Crossing Status", status: "Active", sensorId: "489" },
-    { id: "271831G", location: "Race Track Rd", type: "Crossing Status", status: "Active", sensorId: "512" },
-    { id: "271816E", location: "Atlantic Blvd", type: "Crossing Status", status: "Down", sensorId: "TAS3ACF01" },
-    { id: "621188U", location: "Soutel Dr", type: "Crossing Status", status: "Active", sensorId: "TAS3ACF02" },
-    { id: "271824W", location: "Sunbeam Rd", type: "Crossing Status", status: "Active", sensorId: "601" },
-    { id: "271829F", location: "Greenland Rd", type: "Crossing Status", status: "Active", sensorId: "602" },
-    { id: "273099A", location: "Main Street", type: "Crossing Status", status: "Active", sensorId: "778" },
-    { id: "273100B", location: "Biscayne Blvd", type: "Crossing Status", status: "Active", sensorId: "779" },
-    { id: "274011C", location: "Blanding Blvd", type: "Pre-emption", status: "Active", sensorId: "830" },
-    { id: "274022D", location: "Collins Rd", type: "Pre-emption", status: "Active", sensorId: "831" },
-    { id: "274033E", location: "Beach Blvd", type: "Crossing Status", status: "Down", sensorId: "TAS4BDE05" },
-    { id: "274044F", location: "University Blvd", type: "Crossing Status", status: "Active", sensorId: "TAS4BDE06" },
-    { id: "274055G", location: "Baymeadows Rd", type: "Pre-emption", status: "Active", sensorId: "944" },
-    { id: "274066H", location: "San Jose Blvd", type: "Crossing Status", status: "Active", sensorId: "945" },
-    { id: "274077J", location: "Philips Hwy", type: "Crossing Status", status: "Active", sensorId: "1023" },
-    { id: "274088K", location: "Cassat Ave", type: "Pre-emption", status: "Active", sensorId: "1024" },
-    { id: "274099L", location: "Monument Rd", type: "Crossing Status", status: "Active", sensorId: "1205" },
-    { id: "274100M", location: "Merrill Rd", type: "Crossing Status", status: "Down", sensorId: "1206" },
-    { id: "274111N", location: "Normandy Blvd", type: "Pre-emption", status: "Active", sensorId: "TAS5CEG07" },
+    { id: "620872B", location: "Heckscher Dr",        type: "Crossing Status", status: "Active", sensorId: "TAS2BCE03", calibration: "Calibrated (State 3)"  },
+    { id: "273062B", location: "Breakers Drive",      type: "Crossing Status", status: "Active", sensorId: "341",       calibration: "Low Power (State -1)"   },
+    { id: "273057E", location: "Flagler Center Blvd", type: "Crossing Status", status: "Active", sensorId: "342",       calibration: "Calibrating (State 1)"  },
+    { id: "272938M", location: "Kenan Drive",         type: "Crossing Status", status: "Active", sensorId: "489",       calibration: "Validating (State 2)"   },
+    { id: "271831G", location: "Race Track Rd",       type: "Crossing Status", status: "Active", sensorId: "512",       calibration: "Unassigned (State 0)"   },
+    { id: "271816E", location: "Atlantic Blvd",       type: "Crossing Status", status: "Down",   sensorId: "TAS3ACF01", calibration: "Unassigned (State 0)"   },
+    { id: "621188U", location: "Soutel Dr",           type: "Crossing Status", status: "Active", sensorId: "TAS3ACF02", calibration: "Calibrated (State 3)"   },
+    { id: "271824W", location: "Sunbeam Rd",          type: "Crossing Status", status: "Active", sensorId: "601",       calibration: "Validating (State 2)"   },
+    { id: "271829F", location: "Greenland Rd",        type: "Crossing Status", status: "Active", sensorId: "602",       calibration: "Low Power (State -1)"   },
+    { id: "273099A", location: "Main Street",         type: "Crossing Status", status: "Active", sensorId: "778",       calibration: "Calibrating (State 1)"  },
+    { id: "273100B", location: "Biscayne Blvd",       type: "Crossing Status", status: "Active", sensorId: "779",       calibration: "Calibrated (State 3)"   },
+    { id: "274011C", location: "Blanding Blvd",       type: "Pre-emption",     status: "Active", sensorId: "830",       calibration: "Validating (State 2)"   },
+    { id: "274022D", location: "Collins Rd",          type: "Pre-emption",     status: "Active", sensorId: "831",       calibration: "Low Power (State -1)"   },
+    { id: "274033E", location: "Beach Blvd",          type: "Crossing Status", status: "Down",   sensorId: "TAS4BDE05", calibration: "Unassigned (State 0)"   },
+    { id: "274044F", location: "University Blvd",     type: "Crossing Status", status: "Active", sensorId: "TAS4BDE06", calibration: "Calibrating (State 1)"  },
+    { id: "274055G", location: "Baymeadows Rd",       type: "Pre-emption",     status: "Active", sensorId: "944",       calibration: "Calibrated (State 3)"   },
+    { id: "274066H", location: "San Jose Blvd",       type: "Crossing Status", status: "Active", sensorId: "945",       calibration: "Validating (State 2)"   },
+    { id: "274077J", location: "Philips Hwy",         type: "Crossing Status", status: "Active", sensorId: "1023",      calibration: "Calibrating (State 1)"  },
+    { id: "274088K", location: "Cassat Ave",          type: "Pre-emption",     status: "Active", sensorId: "1024",      calibration: "Low Power (State -1)"   },
+    { id: "274099L", location: "Monument Rd",         type: "Crossing Status", status: "Active", sensorId: "1205",      calibration: "Calibrated (State 3)"   },
+    { id: "274100M", location: "Merrill Rd",          type: "Crossing Status", status: "Down",   sensorId: "1206",      calibration: "Unassigned (State 0)"   },
+    { id: "274111N", location: "Normandy Blvd",       type: "Pre-emption",     status: "Active", sensorId: "TAS5CEG07", calibration: "Calibrated (State 3)"   },
   ])
   const crossings = crossingsList
   const crossingsTotalPages = Math.max(1, Math.ceil(crossings.length / PAGE_SIZE))
@@ -171,8 +172,8 @@ export default function CustomerDetailPage() {
 
       <div className="p-6 space-y-6">
         {/* Customer Info Card */}
-        <Card className="p-6">
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="p-4">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-3">
             <div>
               <p className="text-sm text-muted-foreground mb-1">Customer ID</p>
               <p className="font-medium">127</p>
@@ -256,8 +257,8 @@ export default function CustomerDetailPage() {
           </div>
 
           {/* Shipping Address Section */}
-          <div className="mt-6 pt-6 border-t border-border">
-            <div className="flex items-center justify-between mb-4">
+          <div className="mt-3 pt-3 border-t border-border">
+            <div className="flex items-center justify-between mb-2">
               <h3 className="font-bold">Shipping Address</h3>
             </div>
             <div className="bg-muted/30 rounded-lg p-4">
@@ -268,23 +269,23 @@ export default function CustomerDetailPage() {
             </div>
           </div>
 
-          <div className="mt-6 pt-6 border-t border-border">
+          <div className="mt-3 pt-3 border-t border-border">
             {/* CSE action buttons */}
             <div className="flex flex-wrap gap-3">
               <Button asChild className="bg-accent hover:bg-accent/90">
-                <a href="/portal/cse/customer-preview/127" target="_blank" rel="noopener noreferrer">
-                  <Eye size={18} className="mr-2" />
-                  View Customer Portal
-                </a>
-              </Button>
+                  <a href="/portal/cse/customer-preview/127" target="_blank" rel="noopener noreferrer">
+                    <Eye size={18} className="mr-2" />
+                    View Customer Portal
+                  </a>
+                </Button>
               <Button variant="outline" onClick={() => setShowReportModal(true)}>
-                <Upload size={18} className="mr-2" />
-                Generate Response Intelligence
-              </Button>
+                  <Upload size={18} className="mr-2" />
+                  Generate Response Intelligence
+                </Button>
               <Button variant="outline" onClick={() => setShowPasswordModal(true)}>
-                <KeyRound size={18} className="mr-2" />
-                Reset Customer Password
-              </Button>
+                  <KeyRound size={18} className="mr-2" />
+                  Reset Customer Password
+                </Button>
               <Button variant="outline" onClick={() => setShowOnboardModal(true)}>
                 <Plus size={18} className="mr-2" />
                 Onboard Crossing
@@ -559,29 +560,29 @@ export default function CustomerDetailPage() {
 
         {/* Crossings Tab Content */}
         {activeTab === "crossings" && (
-          <Card className="p-6">
+          <div>
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-bold">Total Crossing of Interest: 1 - (1 Active)</h3>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className="border border-border rounded-lg overflow-hidden">
               <table className="w-full">
-                <thead className="border-b border-border">
-                  <tr className="text-left">
-                    <th className="pb-3 font-bold text-sm">Crossing ID</th>
-                    <th className="pb-3 font-bold text-sm">Sensor ID</th>
-                    <th className="pb-3 font-bold text-sm">Location</th>
-                    <th className="pb-3 font-bold text-sm">Information Type</th>
-                    <th className="pb-3 font-bold text-sm">Status</th>
-                    <th className="pb-3 font-bold text-sm text-center">Actions</th>
+                <thead className="bg-gray-100">
+                  <tr className="text-left text-sm">
+                    <th className="px-4 py-3 font-semibold">Crossing ID</th>
+                    <th className="px-4 py-3 font-semibold">Sensor ID</th>
+                    <th className="px-4 py-3 font-semibold">Location</th>
+                    <th className="px-4 py-3 font-semibold">Information Type</th>
+                    <th className="px-4 py-3 font-semibold">Sensor Status</th>
+                    <th className="px-4 py-3 font-semibold text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {pagedCrossings.map((crossing) => (
-                    <tr key={crossing.id} className="border-b border-border hover:bg-muted/50 transition">
-                      <td className="py-4 font-medium text-accent">{crossing.id}</td>
-                      <td className="py-4 font-mono text-sm">{crossing.sensorId}</td>
-                      <td className="py-4">
+                    <tr key={crossing.id} className="border-t border-border hover:bg-muted/30 transition">
+                      <td className="px-4 py-3 text-sm font-medium text-accent">{crossing.id}</td>
+                      <td className="px-4 py-3 text-sm font-mono">{crossing.sensorId}</td>
+                      <td className="px-4 py-3 text-sm">
                         {editingLocationId === crossing.id ? (
                           <div className="flex items-center gap-2">
                             <input
@@ -599,30 +600,30 @@ export default function CustomerDetailPage() {
                             </Button>
                           </div>
                         ) : (
-                          <div className="flex items-center gap-2 group">
-                            <span>{crossing.location}</span>
-                            <Button 
-                              size="sm" 
-                              variant="ghost" 
-                              className="opacity-0 group-hover:opacity-100 transition hover:bg-accent/10 text-accent h-6 w-6 p-0"
-                              onClick={() => {
-                                setEditingLocationId(crossing.id)
-                                setEditingLocationName(crossing.location)
-                              }}
-                            >
-                              <Edit size={12} />
-                            </Button>
-                          </div>
+                          <span>{crossing.location}</span>
                         )}
                       </td>
-                      <td className="py-4 text-muted-foreground">{crossing.type}</td>
-                      <td className="py-4">
-                        <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
+                      <td className="px-4 py-3 text-sm text-muted-foreground">{crossing.type}</td>
+                      <td className="px-4 py-3 text-sm">
+                        <span className={`px-2 py-1 text-xs rounded-full ${
+                          crossing.status === "Active"
+                            ? "bg-green-100 text-green-700"
+                            : "bg-red-100 text-red-700"
+                        }`}>
                           {crossing.status}
                         </span>
                       </td>
-                      <td className="py-4">
+                      <td className="px-4 py-3 text-sm">
                         <div className="flex items-center justify-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="hover:bg-accent/10 text-accent"
+                            title="Edit Information Type"
+                            onClick={() => setEditInfoTypeModal({ open: true, crossingId: crossing.id, value: crossing.type })}
+                          >
+                            <Edit size={16} />
+                          </Button>
                           <Button
                             size="sm"
                             variant="ghost"
@@ -633,20 +634,20 @@ export default function CustomerDetailPage() {
                             <Settings size={16} />
                           </Button>
                           <Button
+                              size="sm"
+                              variant="ghost"
+                              className="hover:bg-blue-100 text-blue-600"
+                              title="Replace Sensor"
+                              onClick={() => {
+                                setConfirmModal({ open: true, type: 'replace', crossing })
+                                setConfirmText("")
+                              }}
+                            >
+                              <RightLeftIcon width={16} height={16} />
+                            </Button>
+                          <Button
                             size="sm"
                             variant="ghost"
-                            className="hover:bg-blue-100 text-blue-600"
-                            title="Replace Sensor"
-                            onClick={() => {
-                              setConfirmModal({ open: true, type: 'replace', crossing })
-                              setConfirmText("")
-                            }}
-                          >
-                            <RightLeftIcon width={16} height={16} />
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
                             className="hover:bg-orange-100 text-orange-600"
                             title="Decommission Crossing"
                             onClick={() => {
@@ -664,9 +665,49 @@ export default function CustomerDetailPage() {
               </table>
             </div>
             <TablePagination currentPage={crossingsPage} totalPages={crossingsTotalPages} onPageChange={setCrossingsPage} />
-          </Card>
+          </div>
         )}
 
+
+        {/* Edit Information Type Modal */}
+        {editInfoTypeModal?.open && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <Card className="w-full max-w-sm">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-1">
+                  <h2 className="text-lg font-bold">Edit Information Type</h2>
+                  <Button variant="ghost" size="sm" onClick={() => setEditInfoTypeModal(null)}>
+                    <X size={18} />
+                  </Button>
+                </div>
+                <p className="text-sm text-muted-foreground mb-5">Crossing {editInfoTypeModal.crossingId}</p>
+                <select
+                  className="w-full border border-border rounded-lg px-3 py-2.5 bg-background text-sm focus:outline-none focus:border-accent"
+                  value={editInfoTypeModal.value}
+                  onChange={e => setEditInfoTypeModal({ ...editInfoTypeModal, value: e.target.value })}
+                >
+                  <option value="Crossing Status">Crossing Status</option>
+                  <option value="Crossing Prediction">Crossing Prediction</option>
+                  <option value="Congestion Analytics">Congestion Analytics</option>
+                </select>
+                <div className="flex justify-end gap-3 mt-6">
+                  <Button variant="outline" onClick={() => setEditInfoTypeModal(null)}>Cancel</Button>
+                  <Button
+                    className="bg-accent hover:bg-accent/90 text-white"
+                    onClick={() => {
+                      setCrossingsList(list => list.map(c =>
+                        c.id === editInfoTypeModal.crossingId ? { ...c, type: editInfoTypeModal.value } : c
+                      ))
+                      setEditInfoTypeModal(null)
+                    }}
+                  >
+                    Save
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          </div>
+        )}
 
         {/* Response Intelligence Report Upload Modal */}
         {showReportModal && (
@@ -798,35 +839,28 @@ export default function CustomerDetailPage() {
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <Card className="w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden">
               {/* Sticky Header */}
-              <div className="flex-shrink-0 px-6 pt-6 pb-0 border-b border-border bg-background">
+              <div className="flex-shrink-0 px-6 pt-5 pb-0 border-b border-border bg-background">
                 {/* Modal Header */}
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold">Onboard Crossing</h2>
+                <div className="flex items-center justify-between mb-5">
+                  <h2 className="text-xl font-bold">Onboard Crossing</h2>
                   <Button variant="ghost" size="sm" onClick={() => { setShowOnboardModal(false); setOnboardStep(1); setSelectedCrossings([]); }}>
                     <X size={20} />
                   </Button>
                 </div>
 
-                {/* Progress Steps */}
-                <div className="flex items-center justify-center mb-8">
+                {/* Progress Steps — matching Add Bell Configuration style */}
+                <div className="flex items-center justify-center mb-5">
                   <div className="flex items-center gap-2">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${onboardStep === 1 ? "bg-accent text-white" : "bg-muted text-muted-foreground"}`}>
-                      1
+                    <div className="flex flex-col items-center gap-1">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${onboardStep === 1 ? "bg-accent text-white" : "bg-gray-200 text-gray-500"}`}>1</div>
+                      <span className={`text-xs font-medium ${onboardStep === 1 ? "text-accent" : "text-muted-foreground"}`}>Select Crossing</span>
                     </div>
-                    <div className="w-32 h-1 bg-muted"></div>
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${onboardStep === 2 ? "bg-accent text-white" : "bg-muted text-muted-foreground"}`}>
-                      2
+                    <div className={`w-24 h-1 mb-4 ${onboardStep >= 2 ? "bg-accent" : "bg-gray-200"}`} />
+                    <div className="flex flex-col items-center gap-1">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${onboardStep >= 2 ? "bg-accent text-white" : "bg-gray-200 text-gray-500"}`}>2</div>
+                      <span className={`text-xs font-medium ${onboardStep >= 2 ? "text-accent" : "text-muted-foreground"}`}>Add Information Type</span>
                     </div>
                   </div>
-                </div>
-
-                <div className="text-center mb-6">
-                  <h3 className={`font-bold text-lg ${onboardStep === 1 ? "" : "text-muted-foreground"}`}>
-                    {onboardStep === 1 ? "Select Crossing" : "Select Crossing"}
-                  </h3>
-                  <h3 className={`font-bold text-lg ${onboardStep === 2 ? "" : "text-muted-foreground"}`}>
-                    {onboardStep === 2 ? "Add Information Type" : ""}
-                  </h3>
                 </div>
               </div>
 
@@ -1074,46 +1108,49 @@ export default function CustomerDetailPage() {
 
                       <div className="border border-border rounded-lg overflow-hidden">
                         <table className="w-full">
-                          <thead className="bg-muted/50">
-                            <tr className="text-left text-accent">
+                          <thead className="bg-gray-100">
+                            <tr className="text-left text-sm">
                               <th className="p-3 w-10"></th>
-                              <th className="p-3 font-bold text-sm">Crossing ID</th>
-                              <th className="p-3 font-bold text-sm">Crossing Location</th>
-                              <th className="p-3 font-bold text-sm">City</th>
-                              <th className="p-3 font-bold text-sm">Latitude</th>
-                              <th className="p-3 font-bold text-sm">Longitude</th>
-                              <th className="p-3 font-bold text-sm text-center">Action</th>
+                              <th className="p-3 font-semibold text-foreground">Crossing ID</th>
+                              <th className="p-3 font-semibold text-foreground">Crossing Location</th>
+                              <th className="p-3 font-semibold text-foreground">City</th>
+                              <th className="p-3 font-semibold text-foreground">Latitude</th>
+                              <th className="p-3 font-semibold text-foreground">Longitude</th>
+                              <th className="p-3 font-semibold text-foreground text-center">Action</th>
                             </tr>
                           </thead>
                           <tbody>
                             {filteredCrossings.length > 0 ? (
-                              filteredCrossings.map((crossing, i) => (
-                                <tr key={crossing.id} className={`border-t border-border hover:bg-muted/30 ${i % 2 === 0 ? "bg-muted/10" : ""}`}>
-                                  <td className="p-3">
-                                    <input 
-                                      type="checkbox" 
-                                      checked={selectedCrossings.includes(crossing.id)}
-                                      onChange={() => toggleCrossingSelection(crossing.id)}
-                                      className="accent-accent w-4 h-4"
-                                    />
-                                  </td>
-                                  <td className="p-3 font-medium">{crossing.id}</td>
-                                  <td className="p-3">{crossing.location}</td>
-                                  <td className="p-3">{crossing.city}</td>
-                                  <td className="p-3 font-mono text-sm">{crossing.lat}</td>
-                                  <td className="p-3 font-mono text-sm">{crossing.long}</td>
-                                  <td className="p-3 text-center">
-                                    <Button 
-                                      size="sm" 
-                                      variant="ghost" 
-                                      className={`${selectedCrossings.includes(crossing.id) ? "text-green-600" : "text-accent hover:text-accent/80"}`}
-                                      onClick={() => toggleCrossingSelection(crossing.id)}
-                                    >
-                                      <ThumbsUp size={20} />
-                                    </Button>
-                                  </td>
-                                </tr>
-                              ))
+                              filteredCrossings.map((crossing, i) => {
+                                const isSelected = selectedCrossings.includes(crossing.id)
+                                return (
+                                  <tr key={crossing.id} className={`border-t border-border hover:bg-muted/30 transition ${isSelected ? "bg-accent/5" : i % 2 !== 0 ? "bg-muted/10" : ""}`}>
+                                    <td className="p-3">
+                                      <input
+                                        type="checkbox"
+                                        checked={isSelected}
+                                        onChange={() => toggleCrossingSelection(crossing.id)}
+                                        className="accent-accent w-4 h-4"
+                                      />
+                                    </td>
+                                    <td className="p-3 text-sm font-medium text-accent">{crossing.id}</td>
+                                    <td className="p-3 text-sm">{crossing.location}</td>
+                                    <td className="p-3 text-sm">{crossing.city}</td>
+                                    <td className="p-3 font-mono text-sm">{crossing.lat}</td>
+                                    <td className="p-3 font-mono text-sm">{crossing.long}</td>
+                                    <td className="p-3 text-center">
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className={isSelected ? "text-green-600 hover:bg-green-100" : "text-accent hover:bg-accent/10"}
+                                        onClick={() => toggleCrossingSelection(crossing.id)}
+                                      >
+                                        <ThumbsUp size={18} />
+                                      </Button>
+                                    </td>
+                                  </tr>
+                                )
+                              })
                             ) : (
                               <tr>
                                 <td colSpan={7} className="p-8 text-center text-muted-foreground">
@@ -1176,32 +1213,32 @@ export default function CustomerDetailPage() {
                       <p className="font-medium mb-4">Total Crossings: {isNoWarningSystem ? 1 : selectedCrossings.length}</p>
                       <div className="border border-border rounded-lg overflow-hidden">
                         <table className="w-full">
-                          <thead className="bg-muted/50">
-                            <tr className="text-left text-accent">
-                              <th className="p-3 font-bold text-sm">Crossing ID</th>
-                              <th className="p-3 font-bold text-sm">Crossing Location</th>
-                              <th className="p-3 font-bold text-sm">Latitude</th>
-                              <th className="p-3 font-bold text-sm">Longitude</th>
-                              <th className="p-3 font-bold text-sm text-center">Action</th>
+                          <thead className="bg-gray-100">
+                            <tr className="text-left text-sm">
+                              <th className="p-3 font-semibold text-foreground">Crossing ID</th>
+                              <th className="p-3 font-semibold text-foreground">Crossing Location</th>
+                              <th className="p-3 font-semibold text-foreground">Latitude</th>
+                              <th className="p-3 font-semibold text-foreground">Longitude</th>
+                              <th className="p-3 font-semibold text-foreground text-center">Action</th>
                             </tr>
                           </thead>
                           <tbody>
                             {isNoWarningSystem ? (
                               <tr className="border-t border-border bg-muted/10">
-                                <td className="p-3 font-medium">
+                                <td className="p-3 text-sm font-medium text-accent">
                                   <span className="text-amber-600 italic">No Warning System</span>
                                 </td>
-                                <td className="p-3">{noWarningLocation}</td>
+                                <td className="p-3 text-sm">{noWarningLocation}</td>
                                 <td className="p-3 font-mono text-sm">{noWarningLat}</td>
                                 <td className="p-3 font-mono text-sm">{noWarningLong}</td>
                                 <td className="p-3 text-center">
-                                  <Button 
-                                    size="sm" 
-                                    variant="ghost" 
-                                    className="text-orange-600 hover:bg-orange-100"
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="text-red-600 hover:bg-red-100"
                                     onClick={() => setOnboardStep(1)}
                                   >
-                                    <Edit size={16} />
+                                    <Trash2 size={16} />
                                   </Button>
                                 </td>
                               </tr>
@@ -1210,19 +1247,19 @@ export default function CustomerDetailPage() {
                                 const crossing = fraCrossings.find(c => c.id === id)
                                 if (!crossing) return null
                                 return (
-                                  <tr key={id} className={`border-t border-border ${i % 2 === 0 ? "bg-muted/10" : ""}`}>
-                                    <td className="p-3 font-medium">{crossing.id}</td>
-                                    <td className="p-3">{crossing.location}</td>
+                                  <tr key={id} className={`border-t border-border hover:bg-muted/30 transition ${i % 2 !== 0 ? "bg-muted/10" : ""}`}>
+                                    <td className="p-3 text-sm font-medium text-accent">{crossing.id}</td>
+                                    <td className="p-3 text-sm">{crossing.location}</td>
                                     <td className="p-3 font-mono text-sm">{crossing.lat}</td>
                                     <td className="p-3 font-mono text-sm">{crossing.long}</td>
                                     <td className="p-3 text-center">
-                                      <Button 
-                                        size="sm" 
-                                        variant="ghost" 
-                                        className="text-orange-600 hover:bg-orange-100"
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="text-red-600 hover:bg-red-100"
                                         onClick={() => toggleCrossingSelection(id)}
                                       >
-                                        <X size={20} />
+                                        <Trash2 size={16} />
                                       </Button>
                                     </td>
                                   </tr>
@@ -1269,7 +1306,7 @@ export default function CustomerDetailPage() {
                   </>
                 ) : (
                   <>
-                    <Button variant="outline" className="bg-muted" onClick={() => setOnboardStep(1)}>
+                    <Button variant="outline" onClick={() => setOnboardStep(1)}>
                       Back
                     </Button>
                     <Button className="bg-accent hover:bg-accent/90">
@@ -1471,117 +1508,124 @@ export default function CustomerDetailPage() {
           </div>
         )}
 
-        {/* Edit Shipping Address Modal */}
+        {/* Edit Customer Drawer */}
         {showShippingModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <Card className="w-full max-w-lg">
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-accent/10 rounded-full flex items-center justify-center">
-                      <MapPinned size={20} className="text-accent" />
-                    </div>
-                    <h2 className="text-xl font-bold">Edit Customer</h2>
-                  </div>
-                  <Button variant="ghost" size="sm" onClick={() => setShowShippingModal(false)}>
-                    <X size={20} />
-                  </Button>
-                </div>
+          <>
+            {/* Backdrop */}
+            <div
+              className="fixed inset-0 bg-black/50 z-40"
+              onClick={() => setShowShippingModal(false)}
+            />
+            {/* Drawer panel */}
+            <div className="fixed right-0 top-0 h-full w-[480px] bg-background z-50 flex flex-col shadow-2xl border-l border-border">
 
-                <div className="space-y-4">
+              {/* Header */}
+              <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-b border-border">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 bg-accent/10 rounded-full flex items-center justify-center">
+                    <MapPinned size={18} className="text-accent" />
+                  </div>
+                  <h2 className="text-base font-bold">Edit Customer</h2>
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => setShowShippingModal(false)}>
+                  <X size={20} />
+                </Button>
+              </div>
+
+              {/* Scrollable form body */}
+              <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Customer Name</label>
+                  <input
+                    type="text"
+                    defaultValue="North Florida TPO"
+                    className="w-full border border-border rounded-lg px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-accent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Support Contact Name</label>
+                  <input
+                    type="text"
+                    defaultValue="John Smith"
+                    className="w-full border border-border rounded-lg px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-accent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Support Contact Email</label>
+                  <input
+                    type="email"
+                    defaultValue="john.smith@nftpo.org"
+                    className="w-full border border-border rounded-lg px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-accent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Company Name</label>
+                  <input
+                    type="text"
+                    defaultValue="North Florida TPO"
+                    className="w-full border border-border rounded-lg px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-accent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Street Address</label>
+                  <input
+                    type="text"
+                    defaultValue="980 N Jefferson St, Suite 200"
+                    className="w-full border border-border rounded-lg px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-accent"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-2">Customer Name</label>
+                    <label className="block text-sm font-medium mb-2">City</label>
                     <input
                       type="text"
-                      defaultValue="North Florida TPO"
-                      className="w-full border border-border rounded-lg p-3 bg-background"
+                      defaultValue="Jacksonville"
+                      className="w-full border border-border rounded-lg px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-accent"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-2">Support Contact Name</label>
+                    <label className="block text-sm font-medium mb-2">State/Province</label>
                     <input
                       type="text"
-                      defaultValue="John Smith"
-                      className="w-full border border-border rounded-lg p-3 bg-background"
+                      defaultValue="FL"
+                      className="w-full border border-border rounded-lg px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-accent"
                     />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Support Contact Email</label>
-                    <input
-                      type="email"
-                      defaultValue="john.smith@nftpo.org"
-                      className="w-full border border-border rounded-lg p-3 bg-background"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Company Name</label>
-                    <input
-                      type="text"
-                      defaultValue="North Florida TPO"
-                      className="w-full border border-border rounded-lg p-3 bg-background"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Street Address</label>
-                    <input
-                      type="text"
-                      defaultValue="980 N Jefferson St, Suite 200"
-                      className="w-full border border-border rounded-lg p-3 bg-background"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2">City</label>
-                      <input
-                        type="text"
-                        defaultValue="Jacksonville"
-                        className="w-full border border-border rounded-lg p-3 bg-background"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">State/Province</label>
-                      <input
-                        type="text"
-                        defaultValue="FL"
-                        className="w-full border border-border rounded-lg p-3 bg-background"
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Postal Code</label>
-                      <input
-                        type="text"
-                        defaultValue="32209"
-                        className="w-full border border-border rounded-lg p-3 bg-background"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Country</label>
-                      <select className="w-full border border-border rounded-lg p-3 bg-background">
-                        <option>United States</option>
-                        <option>Canada</option>
-                      </select>
-                    </div>
                   </div>
                 </div>
-
-                <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-border">
-                  <Button variant="outline" onClick={() => setShowShippingModal(false)}>Cancel</Button>
-                  <Button className="bg-accent hover:bg-accent/90" onClick={() => setShowShippingModal(false)}>Save Customer</Button>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Postal Code</label>
+                    <input
+                      type="text"
+                      defaultValue="32209"
+                      className="w-full border border-border rounded-lg px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-accent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Country</label>
+                    <select className="w-full border border-border rounded-lg px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-accent">
+                      <option>United States</option>
+                      <option>Canada</option>
+                    </select>
+                  </div>
                 </div>
               </div>
-            </Card>
-          </div>
+
+              {/* Pinned footer */}
+              <div className="flex-shrink-0 flex justify-end gap-3 px-6 py-4 border-t border-border">
+                <Button variant="outline" className="bg-transparent" onClick={() => setShowShippingModal(false)}>
+                  Cancel
+                </Button>
+                <Button className="bg-accent hover:bg-accent/90 text-white" onClick={() => setShowShippingModal(false)}>
+                  Save Customer
+                </Button>
+              </div>
+
+            </div>
+          </>
         )}
       </div>
 
-      {/* ── Sticky bottom action bar ── */}
-      <div className="sticky bottom-0 z-10 bg-background border-t border-border px-6 py-4">
-        <Button variant="outline" onClick={() => router.push("/portal/cse/customers")}>
-          ← Back to Customers
-        </Button>
-      </div>
 
     </PortalLayout>
   )

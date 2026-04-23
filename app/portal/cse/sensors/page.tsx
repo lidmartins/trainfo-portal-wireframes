@@ -1,7 +1,6 @@
 "use client"
 
 import PortalLayout from "@/components/portal-layout"
-import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Search, FileText, Heart, Video, BarChart, Settings, AlertTriangle, Wrench } from "lucide-react"
 import { useState, useEffect } from "react"
@@ -284,106 +283,107 @@ export default function CSESensorsPage() {
         </div>
 
         {/* Sensor Table */}
-        <Card className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-sm text-muted-foreground">
-              Showing {pagedSensors.length} of {filteredSensors.length} sensors
-            </p>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="border-b border-border">
-                <tr className="text-left">
-                  <th className="pb-3 font-bold text-sm">Sensor ID</th>
-                  <th className="pb-3 font-bold text-sm">Sensor Location</th>
-                  <th className="pb-3 font-bold text-sm">Customer Name</th>
-                  <th className="pb-3 font-bold text-sm">Sensor Status</th>
-                  <th className="pb-3 font-bold text-sm">Calibration Status</th>
-                  <th className="pb-3 font-bold text-sm">Last Blockage</th>
-                  <th className="pb-3 font-bold text-sm text-center">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pagedSensors.map((sensor) => (
-                  <tr key={sensor.id} className={`border-b border-border hover:bg-muted/50 transition ${sensor.status === "Down" ? "bg-red-50" : ""}`}>
-                    <td className="py-4 font-medium text-accent">{sensor.id}</td>
-                    <td className="py-4">{sensor.location}</td>
-                    <td className="py-4 text-muted-foreground">{sensor.customer}</td>
-                    <td className="py-4">
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        sensor.status === "Active" 
-                          ? "bg-green-100 text-green-700" 
-                          : "bg-red-100 text-red-700"
-                      }`}>
-                        {sensor.status}
-                      </span>
-                    </td>
-                    <td className="py-4">
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        sensor.calibration.includes("Calibrated (State 3)") 
-                          ? "bg-green-100 text-green-700" 
-                          : sensor.calibration.includes("Validating")
-                          ? "bg-blue-100 text-blue-700"
-                          : sensor.calibration.includes("Calibrating")
-                          ? "bg-yellow-100 text-yellow-700"
-                          : sensor.calibration.includes("Low Power")
-                          ? "bg-red-100 text-red-700"
-                          : "bg-gray-100 text-gray-700"
-                      }`}>
-                        {sensor.calibration}
-                      </span>
-                    </td>
-                    <td className="py-4 text-muted-foreground">{sensor.lastBlockage}</td>
-                    <td className="py-4">
-                      <div className="flex items-center justify-center gap-1">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="hover:bg-accent/10 text-accent"
-                          title="Configure Sensor"
-                        >
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-sm text-muted-foreground">
+            Showing {pagedSensors.length} of {filteredSensors.length} sensors
+          </p>
+        </div>
+        <div className="border border-border rounded-lg overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-gray-100">
+              <tr className="text-left text-sm">
+                <th className="px-4 py-3 font-semibold">Sensor ID</th>
+                <th className="px-4 py-3 font-semibold">Sensor Location</th>
+                <th className="px-4 py-3 font-semibold">Customer Name</th>
+                <th className="px-4 py-3 font-semibold">Sensor Status</th>
+                <th className="px-4 py-3 font-semibold">Calibration Status</th>
+                <th className="px-4 py-3 font-semibold">Last Blockage</th>
+                <th className="px-4 py-3 font-semibold text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pagedSensors.map((sensor) => (
+                <tr key={sensor.id} className={`border-t border-border hover:bg-muted/30 transition ${sensor.status === "Down" ? "bg-red-50" : ""}`}>
+                  <td className="px-4 py-3 text-sm font-medium text-accent">{sensor.id}</td>
+                  <td className="px-4 py-3 text-sm">{sensor.location}</td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">{sensor.customer}</td>
+                  <td className="px-4 py-3 text-sm">
+                    <span className={`px-2 py-1 text-xs rounded-full ${
+                      sensor.status === "Active"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-red-100 text-red-700"
+                    }`}>
+                      {sensor.status}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-sm">
+                    <span className={`px-2 py-1 text-xs rounded-full ${
+                      sensor.calibration.includes("Calibrated (State 3)")
+                        ? "bg-green-100 text-green-700"
+                        : sensor.calibration.includes("Validating")
+                        ? "bg-blue-100 text-blue-700"
+                        : sensor.calibration.includes("Calibrating")
+                        ? "bg-yellow-100 text-yellow-700"
+                        : sensor.calibration.includes("Low Power")
+                        ? "bg-red-100 text-red-700"
+                        : "bg-gray-100 text-gray-700"
+                    }`}>
+                      {sensor.calibration}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">{sensor.lastBlockage}</td>
+                  <td className="px-4 py-3 text-sm">
+                    <div className="flex items-center justify-center gap-1">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="hover:bg-accent/10 text-accent"
+                        title="Configure Sensor"
+                        asChild
+                      >
+                        <Link href={`/portal/cse/sensors/${sensor.id}/configure`}>
                           <Settings size={16} />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="hover:bg-accent/10"
-                          title="Files & Downloads"
-                          asChild
-                        >
-                          <Link href={`/sensors/${sensor.id}/files`}>
-                            <FileText size={16} />
-                          </Link>
-                        </Button>
-<Button
-                          size="sm"
-                          variant="ghost"
-                          className="hover:bg-accent/10"
-                          title="Heartbeat History"
-                          asChild
-                        >
-                          <Link href={`/sensors/${sensor.id}/heartbeat`}>
-                            <Heart size={16} />
-                          </Link>
-                        </Button>
-                        <Button size="sm" variant="ghost" className="hover:bg-accent/10" title="Video">
-                          <Video size={16} />
-                        </Button>
-                        <Button size="sm" variant="ghost" className="hover:bg-accent/10" title="Analytics">
-                          <BarChart size={16} />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          {filteredSensors.length === 0 && (
-            <div className="text-center py-8 text-muted-foreground">No sensors found matching your filters.</div>
-          )}
-          <TablePagination currentPage={sensorPage} totalPages={sensorTotalPages} onPageChange={setSensorPage} />
-        </Card>
+                        </Link>
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="hover:bg-accent/10"
+                        title="Files & Downloads"
+                        asChild
+                      >
+                        <Link href={`/sensors/${sensor.id}/files`}>
+                          <FileText size={16} />
+                        </Link>
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="hover:bg-accent/10"
+                        title="Heartbeat History"
+                        asChild
+                      >
+                        <Link href={`/sensors/${sensor.id}/heartbeat`}>
+                          <Heart size={16} />
+                        </Link>
+                      </Button>
+                      <Button size="sm" variant="ghost" className="hover:bg-accent/10" title="Video">
+                        <Video size={16} />
+                      </Button>
+                      <Button size="sm" variant="ghost" className="hover:bg-accent/10" title="Analytics">
+                        <BarChart size={16} />
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {filteredSensors.length === 0 && (
+          <div className="text-center py-8 text-muted-foreground">No sensors found matching your filters.</div>
+        )}
+        <TablePagination currentPage={sensorPage} totalPages={sensorTotalPages} onPageChange={setSensorPage} />
       </div>
     </PortalLayout>
   )

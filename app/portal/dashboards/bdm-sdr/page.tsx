@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card"
 import { useState } from "react"
 
 const sidebarItems = [
-  { icon: BarChart3, label: "Dashboard", href: "/portal/dashboards/bdm-sdr" },
+  { icon: BarChart3, label: "Dashboard", href: "/portal/dashboards/bdm-sdr", active: true },
   { icon: Users, label: "Leads", href: "/portal/leads" },
   { icon: HelpCircle, label: "Help & Support", href: "/portal/support" },
 ]

@@ -23,7 +23,7 @@ import { Card } from "@/components/ui/card"
 import { useState } from "react"
 
 const sidebarItems = [
-  { icon: BarChart3, label: "Dashboard", href: "/portal/dashboards/customer-admin" },
+  { icon: BarChart3, label: "Dashboard", href: "/portal/dashboards/customer-admin", active: true },
   { icon: MapPin, label: "Agents", href: "/portal/agents" },
   { icon: FileText, label: "Planning Studies", href: "/portal/studies" },
   { icon: Clock, label: "Signal Timing", href: "/portal/timing" },

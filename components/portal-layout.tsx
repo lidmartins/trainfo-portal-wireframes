@@ -3,10 +3,11 @@
 import type React from "react"
 
 import Link from "next/link"
+import Image from "next/image"
 import {
   LogOut,
-  Menu,
-  X,
+  ChevronLeft,
+  ChevronRight,
   BarChart3,
   MapPin,
   FileText,
@@ -18,7 +19,7 @@ import {
   Cpu,
   TrendingUp,
 } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 interface PortalLayoutProps {
   role:
@@ -33,6 +34,8 @@ interface PortalLayoutProps {
   subtitle?: string
   children: React.ReactNode
   activeHref?: string
+  /** Return false to cancel navigation (e.g. unsaved-changes guard). */
+  onBeforeNavigate?: (href: string) => boolean
 }
 
 const navigationByRole = {
@@ -98,28 +101,69 @@ const navigationByRole = {
   ],
 }
 
-export default function PortalLayout({ role, title, subtitle, children, activeHref }: PortalLayoutProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+export default function PortalLayout({ role, title, subtitle, children, activeHref, onBeforeNavigate }: PortalLayoutProps) {
+  const [sidebarOpen, setSidebarOpen] = useState<boolean | null>(null)
   const sidebarItems = navigationByRole[role]
+
+  useEffect(() => {
+    const stored = localStorage.getItem("sidebarOpen")
+    setSidebarOpen(stored === null ? true : stored === "true")
+  }, [])
+
+  // Don't render sidebar until localStorage is read to avoid hydration flash
+  if (sidebarOpen === null) return null
+
+  function toggleSidebar() {
+    const next = !sidebarOpen
+    setSidebarOpen(next)
+    localStorage.setItem("sidebarOpen", String(next))
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       {/* Sidebar */}
       <aside
-        className={`${sidebarOpen ? "w-64" : "w-20"} shrink-0 bg-sidebar border-r border-sidebar-border transition-all duration-300 flex flex-col`}
+        className={`${sidebarOpen ? "w-64" : "w-16"} shrink-0 bg-sidebar border-r border-sidebar-border transition-all duration-300 flex flex-col overflow-hidden`}
       >
-        <div className="h-16 border-b border-sidebar-border flex items-center justify-between px-4">
-          <div className={`flex items-center gap-2 ${!sidebarOpen && "hidden"}`}>
-            <div className="w-8 h-8 bg-sidebar-primary rounded-lg flex items-center justify-center">
-              <span className="text-sidebar-primary-foreground font-bold text-sm">TI</span>
-            </div>
-            <span className="font-bold">TRAINFO</span>
+        {/* Header */}
+        {sidebarOpen ? (
+          <div className="h-16 border-b border-sidebar-border flex items-center justify-between px-4 flex-shrink-0">
+            <Image
+              src="/logo.png"
+              alt="TRAINFO"
+              width={120}
+              height={32}
+              className="h-8 w-auto object-contain"
+              priority
+            />
+            <button
+              onClick={toggleSidebar}
+              className="w-7 h-7 rounded-full bg-foreground text-background flex items-center justify-center hover:opacity-75 transition flex-shrink-0 ml-2"
+            >
+              <ChevronLeft size={14} />
+            </button>
           </div>
-          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="hover:bg-sidebar-accent rounded-lg p-1">
-            {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
-        </div>
+        ) : (
+          <div className="border-b border-sidebar-border flex flex-col items-center justify-center py-3 gap-2 flex-shrink-0">
+            {/* Show only the icon portion of logo.png by clipping the image */}
+            <div className="w-8 h-8 overflow-hidden flex-shrink-0">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/logo.png"
+                alt="TRAINFO"
+                style={{ height: "32px", width: "auto", maxWidth: "none" }}
+              />
+            </div>
+            <button
+              onClick={toggleSidebar}
+              className="w-7 h-7 rounded-full bg-foreground text-background flex items-center justify-center hover:opacity-75 transition flex-shrink-0"
+            >
+              <ChevronRight size={14} />
+            </button>
+          </div>
+        )}
 
+        {/* Nav */}
         <nav className="flex-1 overflow-y-auto py-4 px-2">
           {sidebarItems.map((item, i) => {
             const IconComponent = item.icon
@@ -128,25 +172,33 @@ export default function PortalLayout({ role, title, subtitle, children, activeHr
               <Link
                 key={i}
                 href={item.href}
+                title={!sidebarOpen ? item.label : undefined}
+                onClick={(e) => {
+                  if (onBeforeNavigate && !onBeforeNavigate(item.href)) {
+                    e.preventDefault()
+                  }
+                }}
                 className={`flex items-center gap-3 px-3 py-2 mb-1 rounded-lg transition ${
                   isActive
                     ? "bg-sidebar-primary text-sidebar-primary-foreground"
                     : "text-sidebar-foreground hover:bg-sidebar-accent"
                 }`}
               >
-                <IconComponent size={20} />
-                {sidebarOpen && <span className="text-sm font-medium">{item.label}</span>}
+                <IconComponent size={20} className="shrink-0" />
+                {sidebarOpen && <span className="text-sm font-medium whitespace-nowrap">{item.label}</span>}
               </Link>
             )
           })}
         </nav>
 
+        {/* Logout */}
         <div className="border-t border-sidebar-border p-4">
           <Link
             href="/"
+            title={!sidebarOpen ? "Logout" : undefined}
             className="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-foreground hover:bg-sidebar-accent w-full transition"
           >
-            <LogOut size={20} />
+            <LogOut size={20} className="shrink-0" />
             {sidebarOpen && <span className="text-sm font-medium">Logout</span>}
           </Link>
         </div>

@@ -7,8 +7,17 @@ import { Edit, Trash2, Settings, MapPin, Plus, Navigation, Monitor, Radio, FileT
 import { useState } from "react"
 import { TablePagination } from "@/components/ui/table-pagination"
 import { useParams, useRouter } from "next/navigation"
+import Link from "next/link"
 
 const TAB_PAGE_SIZE = 15
+
+const sensorStaticData: Record<string, { ipAddress: string; deviceType: string }> = {
+  "TAS2BCE03": { ipAddress: "192.168.3.3",   deviceType: "TRAINFO-TAS" },
+  "622":       { ipAddress: "192.168.1.22",  deviceType: "TRAINFO-T3"  },
+  "495":       { ipAddress: "192.168.1.95",  deviceType: "TRAINFO-T3"  },
+  "266":       { ipAddress: "192.168.1.66",  deviceType: "TRAINFO-T2"  },
+  "257":       { ipAddress: "192.168.1.57",  deviceType: "TRAINFO-T3"  },
+}
 
 export default function ConfigureCrossingPage() {
   const params = useParams()
@@ -69,15 +78,52 @@ export default function ConfigureCrossingPage() {
   const [railPage, setRailPage] = useState(1)
   const [showDmsLogsModal, setShowDmsLogsModal] = useState<{ open: boolean; dms: any }>({ open: false, dms: null })
   const [showSetLocationModal, setShowSetLocationModal] = useState<{ open: boolean; beacon: any }>({ open: false, beacon: null })
-  const [decommissionModal, setDecommissionModal] = useState<{ open: boolean; sensorId: string }>({ open: false, sensorId: "" })
-  const [decommissionInput, setDecommissionInput] = useState("")
-  const [deleteRailModal, setDeleteRailModal] = useState<{ open: boolean; segment: string; startId: string; input: string }>({ open: false, segment: "", startId: "", input: "" })
-  const [deleteRoadModal, setDeleteRoadModal] = useState<{ open: boolean; origin: string; destination: string }>({ open: false, origin: "", destination: "" })
-  const [editBtModal, setEditBtModal] = useState<{ open: boolean; sensor: any; powerType: string }>({ open: false, sensor: null, powerType: "" })
+  const [decommissionSensorModal, setDecommissionSensorModal] = useState<{ open: boolean; sensorId: string }>({ open: false, sensorId: "" })
+  const [decommissionSensorConfirm, setDecommissionSensorConfirm] = useState("")
+  const [deleteRailModal, setDeleteRailModal] = useState<{ open: boolean; segment: string; startId: string } | null>(null)
+  const [deleteRailConfirm, setDeleteRailConfirm] = useState("")
+  const [deleteRoadModal, setDeleteRoadModal] = useState<{ open: boolean; origin: string; destination: string } | null>(null)
+  const [editSensorModal, setEditSensorModal] = useState<{ open: boolean; sensor: { id: string; location: string; powerType: string } | null }>({ open: false, sensor: null })
+  const [editSensorPowerType, setEditSensorPowerType] = useState("")
+  const [deleteBellModal, setDeleteBellModal] = useState<{ open: boolean; bellType: string; bellCode: string } | null>(null)
+
+  // Configure Sensor drawer
+  const [showConfigSensorDrawer, setShowConfigSensorDrawer] = useState(false)
+  const [drawerStatus, setDrawerStatus] = useState("Active")
+  const [drawerCalibration, setDrawerCalibration] = useState("Calibrated (State 3)")
+  const [drawerLocation, setDrawerLocation] = useState("Heckscher Dr")
+  const [drawerPowerType, setDrawerPowerType] = useState("Solar")
+  const [drawerSimCardId, setDrawerSimCardId] = useState("89014103211118510729")
+  const [drawerSimCardProvider, setDrawerSimCardProvider] = useState("Telus")
+  const [drawerCameraModule, setDrawerCameraModule] = useState("Yes")
+  const [drawerManufacturer, setDrawerManufacturer] = useState("TRAINFO Inc.")
+  const [drawerWarrantyStart, setDrawerWarrantyStart] = useState("2023-03-15")
+  const [drawerWarrantyEnd, setDrawerWarrantyEnd] = useState("2026-03-15")
 
   // Crossing data derived from crossingId param
   const crossingsList = [
-    { id: "620872B", location: "Heckscher Dr", type: "Crossing Status", status: "Active", sensorId: "TAS2BCE03" },
+    { id: "620872B", location: "Heckscher Dr",           type: "Crossing Status", status: "Active", sensorId: "TAS2BCE03", calibration: "Calibrated (State 3)"  },
+    { id: "273062B", location: "Breakers Drive",         type: "Crossing Status", status: "Active", sensorId: "341",       calibration: "Low Power (State -1)"   },
+    { id: "273057E", location: "Flagler Center Blvd",    type: "Crossing Status", status: "Active", sensorId: "342",       calibration: "Calibrating (State 1)"  },
+    { id: "272938M", location: "Kenan Drive",            type: "Crossing Status", status: "Active", sensorId: "489",       calibration: "Validating (State 2)"   },
+    { id: "271831G", location: "Race Track Rd",          type: "Crossing Status", status: "Active", sensorId: "512",       calibration: "Unassigned (State 0)"   },
+    { id: "271816E", location: "Atlantic Blvd",          type: "Crossing Status", status: "Down",   sensorId: "N/A",       calibration: "Unassigned (State 0)"   },
+    { id: "621188U", location: "Soutel Dr",              type: "Crossing Status", status: "Active", sensorId: "TAS3ACF02", calibration: "Calibrated (State 3)"   },
+    { id: "271824W", location: "Sunbeam Rd",             type: "Crossing Status", status: "Active", sensorId: "601",       calibration: "Validating (State 2)"   },
+    { id: "271829F", location: "Greenland Rd",           type: "Crossing Status", status: "Active", sensorId: "602",       calibration: "Low Power (State -1)"   },
+    { id: "273099A", location: "Main Street",            type: "Crossing Status", status: "Active", sensorId: "778",       calibration: "Calibrating (State 1)"  },
+    { id: "273100B", location: "Biscayne Blvd",          type: "Crossing Status", status: "Active", sensorId: "779",       calibration: "Calibrated (State 3)"   },
+    { id: "274011C", location: "Blanding Blvd",          type: "Pre-emption",     status: "Active", sensorId: "830",       calibration: "Validating (State 2)"   },
+    { id: "274022D", location: "Collins Rd",             type: "Pre-emption",     status: "Active", sensorId: "831",       calibration: "Low Power (State -1)"   },
+    { id: "274033E", location: "Beach Blvd",             type: "Crossing Status", status: "Down",   sensorId: "N/A",       calibration: "Unassigned (State 0)"   },
+    { id: "274044F", location: "University Blvd",        type: "Crossing Status", status: "Active", sensorId: "TAS4BDE06", calibration: "Calibrating (State 1)"  },
+    { id: "274055G", location: "Baymeadows Rd",          type: "Pre-emption",     status: "Active", sensorId: "944",       calibration: "Calibrated (State 3)"   },
+    { id: "274066H", location: "San Jose Blvd",          type: "Crossing Status", status: "Active", sensorId: "945",       calibration: "Validating (State 2)"   },
+    { id: "274077J", location: "Philips Hwy",            type: "Crossing Status", status: "Active", sensorId: "1023",      calibration: "Calibrating (State 1)"  },
+    { id: "274088K", location: "Cassat Ave",             type: "Pre-emption",     status: "Active", sensorId: "1024",      calibration: "Low Power (State -1)"   },
+    { id: "274099L", location: "Monument Rd",            type: "Crossing Status", status: "Active", sensorId: "1205",      calibration: "Calibrated (State 3)"   },
+    { id: "274100M", location: "Merrill Rd",             type: "Crossing Status", status: "Down",   sensorId: "1206",      calibration: "Unassigned (State 0)"   },
+    { id: "274111N", location: "Normandy Blvd",          type: "Pre-emption",     status: "Active", sensorId: "TAS5CEG07", calibration: "Calibrated (State 3)"   },
   ]
   const selectedCrossing = crossingsList.find(c => c.id === crossingId) ?? {
     id: crossingId,
@@ -85,7 +131,18 @@ export default function ConfigureCrossingPage() {
     type: "Crossing Status",
     status: "Active",
     sensorId: "N/A",
+    calibration: "Calibrated (State 3)",
   }
+
+  function calibStateNum(cal: string): number {
+    if (cal.includes("State 3"))  return 3
+    if (cal.includes("State 2"))  return 2
+    if (cal.includes("State 1"))  return 1
+    if (cal.includes("State 0"))  return 0
+    if (cal.includes("State -1")) return -1
+    return 0
+  }
+  const calState = calibStateNum(selectedCrossing.calibration)
 
   const availableCrossings = [
     { id: "620873A", location: "Main St & Railway" },
@@ -206,7 +263,7 @@ export default function ConfigureCrossingPage() {
   const btTabTotalPages = Math.max(1, Math.ceil(bluetoothSensors.length / TAB_PAGE_SIZE))
   const pagedBtTabRows = bluetoothSensors.slice((btTabPage - 1) * TAB_PAGE_SIZE, btTabPage * TAB_PAGE_SIZE)
 
-  const bellTabRows = [
+  const initialBellTabRows = [
     { bellType: "B01", bellCode: "1", freq: "2024", power: "5" },
     { bellType: "B01", bellCode: "1", freq: "2029", power: "5" },
     { bellType: "B20", bellCode: "2", freq: "1970", power: "6" },
@@ -230,8 +287,35 @@ export default function ConfigureCrossingPage() {
     { bellType: "B45", bellCode: "8", freq: "1934", power: "5" },
     { bellType: "B46", bellCode: "9", freq: "2810", power: "4" },
   ]
+  const [bellTabRows, setBellTabRows] = useState(initialBellTabRows)
   const bellTabTotalPages = Math.max(1, Math.ceil(bellTabRows.length / TAB_PAGE_SIZE))
   const pagedBellTabRows = bellTabRows.slice((bellTabPage - 1) * TAB_PAGE_SIZE, bellTabPage * TAB_PAGE_SIZE)
+
+  function handleBellTabRowChange(globalIdx: number, field: "freq" | "power", value: string) {
+    const numeric = value.replace(/\D/g, "")
+    setBellTabRows(rows => rows.map((r, i) => i === globalIdx ? { ...r, [field]: numeric } : r))
+  }
+  const bellTabDirty = JSON.stringify(bellTabRows) !== JSON.stringify(initialBellTabRows)
+
+  const [showLeaveDialog, setShowLeaveDialog] = useState(false)
+  const [pendingAction, setPendingAction] = useState<(() => void) | null>(null)
+
+  function guardedNavigate(action: () => void) {
+    if (bellTabDirty) {
+      setPendingAction(() => action)
+      setShowLeaveDialog(true)
+    } else {
+      action()
+    }
+  }
+
+  function confirmLeave() {
+    setShowLeaveDialog(false)
+    if (pendingAction) {
+      pendingAction()
+      setPendingAction(null)
+    }
+  }
 
   const dmsBoards = [
     { id: "DMS-001", name: "North Approach DMS", voltage: "12.4V", status: "Active", deviceId: "DMS-A1B2C3", vin: "1HGBH41JXMN109186", lat: "30.3285", long: "-81.6558", message: "TRAIN APPROACHING - EXPECT DELAYS" },
@@ -244,7 +328,19 @@ export default function ConfigureCrossingPage() {
   ]
 
   return (
-    <PortalLayout role="cse" title="Configure Crossing" subtitle={`${crossingId} — ${selectedCrossing.location}`} activeHref="/portal/cse/customers">
+    <PortalLayout
+      role="cse"
+      title="Configure Crossing"
+      subtitle={`${crossingId} — ${selectedCrossing.location}`}
+      activeHref="/portal/cse/customers"
+      onBeforeNavigate={(href) => {
+        if (bellTabDirty) {
+          guardedNavigate(() => router.push(href))
+          return false
+        }
+        return true
+      }}
+    >
       {/* Sticky page header: breadcrumb + tab bar */}
       <div className="sticky top-16 z-20 bg-background border-b border-border">
         <div className="px-6 pt-3 pb-0">
@@ -253,14 +349,14 @@ export default function ConfigureCrossingPage() {
           <nav className="flex items-center gap-1 text-sm text-muted-foreground">
             <button
               className="hover:text-foreground transition"
-              onClick={() => router.push("/portal/cse/customers")}
+              onClick={() => guardedNavigate(() => router.push("/portal/cse/customers"))}
             >
               Customers
             </button>
             <ChevronRight size={14} />
             <button
               className="hover:text-foreground transition"
-              onClick={() => router.push(`/portal/cse/customers/${customerId}`)}
+              onClick={() => guardedNavigate(() => router.push(`/portal/cse/customers/${customerId}`))}
             >
               {customerName}
             </button>
@@ -274,7 +370,7 @@ export default function ConfigureCrossingPage() {
 
         {/* Crossing info bar */}
         <div className="px-6 py-3 border-t border-border">
-        <div className="grid grid-cols-4 gap-4 p-4 bg-accent/5 border border-accent/20 rounded-lg">
+        <div className="grid grid-cols-6 gap-4 p-4 bg-accent/5 border border-accent/20 rounded-lg">
           <div>
             <p className="text-xs text-muted-foreground mb-1">Crossing ID</p>
             <p className="font-semibold text-sm">{selectedCrossing.id}</p>
@@ -284,12 +380,47 @@ export default function ConfigureCrossingPage() {
             <p className="font-semibold text-sm">{selectedCrossing.location}</p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground mb-1">Sensor ID</p>
-            <p className="font-semibold text-sm font-mono">{selectedCrossing.sensorId}</p>
+            <p className="text-xs text-muted-foreground mb-1">Information Type</p>
+            <p className="font-semibold text-sm">{selectedCrossing.type}</p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground mb-1">Status</p>
-            <span className="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-700">
+            <p className="text-xs text-muted-foreground mb-1">Sensor ID</p>
+            <div className="flex items-center gap-1.5">
+              <p className="font-semibold text-sm font-mono">{selectedCrossing.sensorId}</p>
+              {selectedCrossing.sensorId !== "N/A" && (
+                <Link
+                  href={`/portal/cse/sensors/${selectedCrossing.sensorId}/configure`}
+                  className="text-accent hover:text-accent/70 transition"
+                  title="Configure Sensor"
+                >
+                  <Settings size={14} />
+                </Link>
+              )}
+            </div>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground mb-1">Calibration Status</p>
+            <span className={`px-2 py-1 text-xs rounded-full ${
+              selectedCrossing.calibration.includes("Calibrated (State 3)")
+                ? "bg-green-100 text-green-700"
+                : selectedCrossing.calibration.includes("Validating")
+                ? "bg-blue-100 text-blue-700"
+                : selectedCrossing.calibration.includes("Calibrating")
+                ? "bg-yellow-100 text-yellow-700"
+                : selectedCrossing.calibration.includes("Low Power")
+                ? "bg-red-100 text-red-700"
+                : "bg-gray-100 text-gray-700"
+            }`}>
+              {selectedCrossing.calibration}
+            </span>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground mb-1">Sensor Status</p>
+            <span className={`px-2 py-1 text-xs rounded-full ${
+              selectedCrossing.status === "Active"
+                ? "bg-green-100 text-green-700"
+                : "bg-red-100 text-red-700"
+            }`}>
               {selectedCrossing.status}
             </span>
           </div>
@@ -307,7 +438,13 @@ export default function ConfigureCrossingPage() {
           ].map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setConfigTab(tab.id)}
+              onClick={() => {
+                if (tab.id !== configTab && configTab === "bell" && bellTabDirty) {
+                  guardedNavigate(() => setConfigTab(tab.id))
+                } else {
+                  setConfigTab(tab.id)
+                }
+              }}
               className={`px-4 py-3 font-medium border-b-2 transition ${
                 configTab === tab.id
                   ? "border-accent text-accent"
@@ -366,7 +503,7 @@ export default function ConfigureCrossingPage() {
                             <Button size="sm" variant="ghost" className="hover:bg-accent/10 text-accent" onClick={() => setShowEditRailSegment(true)}>
                               <Edit size={16} />
                             </Button>
-                            <Button size="sm" variant="ghost" className="hover:bg-red-100 text-red-600" onClick={() => setDeleteRailModal({ open: true, segment: row.segment, startId: row.segment.split(" → ")[0], input: "" })}>
+                            <Button size="sm" variant="ghost" className="hover:bg-red-100 text-red-600" onClick={() => { setDeleteRailModal({ open: true, segment: row.segment, startId: row.segment.split(" → ")[0] }); setDeleteRailConfirm("") }}>
                               <Trash2 size={16} />
                             </Button>
                           </div>
@@ -377,52 +514,6 @@ export default function ConfigureCrossingPage() {
                 </table>
                 <TablePagination currentPage={railTabPage} totalPages={railTabTotalPages} onPageChange={setRailTabPage} />
               </div>
-
-              {/* Delete Rail Segment Modal */}
-              {deleteRailModal.open && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                  <Card className="w-full max-w-md flex flex-col overflow-hidden">
-                    <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-b border-border">
-                      <div className="flex items-center gap-2">
-                        <AlertTriangle size={20} className="text-orange-500" />
-                        <h2 className="text-lg font-bold">Delete Rail Segment — {deleteRailModal.segment}</h2>
-                      </div>
-                      <Button variant="ghost" size="sm" onClick={() => setDeleteRailModal({ open: false, segment: "", startId: "", input: "" })}>
-                        <X size={20} />
-                      </Button>
-                    </div>
-                    <div className="px-6 py-5 space-y-4">
-                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 text-sm text-orange-800">
-                        <strong>Warning:</strong> This will permanently delete this rail segment. Train speed and distance data for this segment will be removed from this crossing configuration.
-                      </div>
-                      <div>
-                        <p className="text-sm text-foreground mb-3">
-                          To confirm, please type the Segment ID <span className="font-mono font-semibold">{deleteRailModal.startId}</span> below:
-                        </p>
-                        <input
-                          type="text"
-                          placeholder="Type Segment ID to confirm"
-                          value={deleteRailModal.input}
-                          onChange={(e) => setDeleteRailModal(m => ({ ...m, input: e.target.value }))}
-                          className="w-full border border-border rounded-lg p-3 bg-background focus:outline-none focus:border-orange-400 text-sm"
-                        />
-                      </div>
-                    </div>
-                    <div className="flex-shrink-0 flex justify-end gap-3 px-6 py-4 border-t border-border">
-                      <Button variant="outline" onClick={() => setDeleteRailModal({ open: false, segment: "", startId: "", input: "" })}>
-                        Cancel
-                      </Button>
-                      <Button
-                        className="bg-orange-500 hover:bg-orange-600 text-white disabled:opacity-40"
-                        disabled={deleteRailModal.input !== deleteRailModal.startId}
-                        onClick={() => setDeleteRailModal({ open: false, segment: "", startId: "", input: "" })}
-                      >
-                        Delete Segment
-                      </Button>
-                    </div>
-                  </Card>
-                </div>
-              )}
 
               {/* Edit Rail Segment Modal */}
               {showEditRailSegment && (
@@ -622,13 +713,13 @@ export default function ConfigureCrossingPage() {
                   Define road segments by selecting Origin and Destination points.
                 </p>
                 <Button
-                  size="sm"
-                  className="bg-accent hover:bg-accent/90 text-white shrink-0 ml-4"
-                  onClick={() => setShowAddRoadSegment(true)}
-                >
-                  <Plus size={16} className="mr-2" />
-                  Add Road Segment
-                </Button>
+                    size="sm"
+                    className="bg-accent hover:bg-accent/90 text-white shrink-0 ml-4"
+                    onClick={() => setShowAddRoadSegment(true)}
+                  >
+                    <Plus size={16} className="mr-2" />
+                    Add Road Segment
+                  </Button>
               </div>
 
               {/* Road segments table */}
@@ -667,42 +758,6 @@ export default function ConfigureCrossingPage() {
                 </table>
                 <TablePagination currentPage={roadTabPage} totalPages={roadTabTotalPages} onPageChange={setRoadTabPage} />
               </div>
-
-              {/* Delete Road Segment Modal */}
-              {deleteRoadModal.open && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                  <Card className="w-full max-w-md flex flex-col overflow-hidden">
-                    <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-b border-border">
-                      <div className="flex items-center gap-2">
-                        <AlertTriangle size={20} className="text-orange-500" />
-                        <h2 className="text-lg font-bold">Delete Road Segment</h2>
-                      </div>
-                      <Button variant="ghost" size="sm" onClick={() => setDeleteRoadModal({ open: false, origin: "", destination: "" })}>
-                        <X size={20} />
-                      </Button>
-                    </div>
-                    <div className="px-6 py-5 space-y-4">
-                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 text-sm text-orange-800">
-                        <strong>Warning:</strong> This will permanently delete this road segment. The Origin and Destination points will be removed from this crossing configuration.
-                      </div>
-                      <p className="text-sm text-foreground">
-                        Are you sure you want to delete the segment from <span className="font-medium">{deleteRoadModal.origin}</span> to <span className="font-medium">{deleteRoadModal.destination}</span>?
-                      </p>
-                    </div>
-                    <div className="flex-shrink-0 flex justify-end gap-3 px-6 py-4 border-t border-border">
-                      <Button variant="outline" onClick={() => setDeleteRoadModal({ open: false, origin: "", destination: "" })}>
-                        Cancel
-                      </Button>
-                      <Button
-                        className="bg-orange-500 hover:bg-orange-600 text-white"
-                        onClick={() => setDeleteRoadModal({ open: false, origin: "", destination: "" })}
-                      >
-                        Delete Segment
-                      </Button>
-                    </div>
-                  </Card>
-                </div>
-              )}
 
               {/* Add Road Segment Modal */}
               {showAddRoadSegment && (
@@ -761,11 +816,11 @@ export default function ConfigureCrossingPage() {
                           </h5>
                           <div className="grid grid-cols-2 gap-2">
                             <div>
-                              <label className="text-xs text-muted-foreground">Latitude</label>
+                              <label className="text-sm font-medium text-muted-foreground">Latitude</label>
                               <input type="text" placeholder="30.3285" className="w-full border border-border rounded-lg p-2 bg-background text-sm focus:outline-none focus:border-accent" />
                             </div>
                             <div>
-                              <label className="text-xs text-muted-foreground">Longitude</label>
+                              <label className="text-sm font-medium text-muted-foreground">Longitude</label>
                               <input type="text" placeholder="-81.6558" className="w-full border border-border rounded-lg p-2 bg-background text-sm focus:outline-none focus:border-accent" />
                             </div>
                           </div>
@@ -778,11 +833,11 @@ export default function ConfigureCrossingPage() {
                           </h5>
                           <div className="grid grid-cols-2 gap-2">
                             <div>
-                              <label className="text-xs text-muted-foreground">Latitude</label>
+                              <label className="text-sm font-medium text-muted-foreground">Latitude</label>
                               <input type="text" placeholder="30.3275" className="w-full border border-border rounded-lg p-2 bg-background text-sm focus:outline-none focus:border-accent" />
                             </div>
                             <div>
-                              <label className="text-xs text-muted-foreground">Longitude</label>
+                              <label className="text-sm font-medium text-muted-foreground">Longitude</label>
                               <input type="text" placeholder="-81.6548" className="w-full border border-border rounded-lg p-2 bg-background text-sm focus:outline-none focus:border-accent" />
                             </div>
                           </div>
@@ -850,8 +905,9 @@ export default function ConfigureCrossingPage() {
                             <Button
                               size="sm"
                               variant="ghost"
-                              className={sensor.canEdit ? "hover:bg-accent/10 text-accent" : "text-accent opacity-30 cursor-not-allowed hover:bg-transparent"}
-                              onClick={sensor.canEdit ? () => setEditBtModal({ open: true, sensor, powerType: "" }) : undefined}
+                              className={sensor.canEdit ? "hover:bg-accent/10 text-accent" : "opacity-30 cursor-not-allowed text-accent"}
+                              disabled={!sensor.canEdit}
+                              onClick={() => { if (sensor.canEdit) { setEditSensorModal({ open: true, sensor: { id: sensor.id, location: sensor.location, powerType: "" } }); setEditSensorPowerType("") } }}
                             >
                               <Edit size={16} />
                             </Button>
@@ -859,7 +915,7 @@ export default function ConfigureCrossingPage() {
                               size="sm"
                               variant="ghost"
                               className="hover:bg-red-100 text-red-600"
-                              onClick={() => { setDecommissionModal({ open: true, sensorId: sensor.id }); setDecommissionInput("") }}
+                              onClick={() => { setDecommissionSensorModal({ open: true, sensorId: sensor.id }); setDecommissionSensorConfirm("") }}
                             >
                               <Trash2 size={16} />
                             </Button>
@@ -873,128 +929,125 @@ export default function ConfigureCrossingPage() {
               </div>
 
               {/* Edit Bluetooth Sensor Modal */}
-              {editBtModal.open && (
+              {editSensorModal.open && editSensorModal.sensor && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                  <Card className="w-full max-w-md flex flex-col overflow-hidden">
-
-                    {/* Header */}
-                    <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-b border-border">
-                      <h2 className="text-xl font-bold">Edit Bluetooth Sensor</h2>
-                      <Button variant="ghost" size="sm" onClick={() => setEditBtModal({ open: false, sensor: null, powerType: "" })}>
-                        <X size={20} />
-                      </Button>
-                    </div>
-
-                    {/* Body */}
-                    <div className="px-6 py-5 space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-2">Sensor ID</label>
-                        <input
-                          type="text"
-                          value={editBtModal.sensor?.id ?? ""}
-                          disabled
-                          className="w-full border border-border rounded-lg p-3 bg-muted text-muted-foreground"
-                        />
+                  <Card className="w-full max-w-md">
+                    <div className="p-6">
+                      <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-xl font-bold">Edit Bluetooth Sensor</h2>
+                        <Button variant="ghost" size="sm" onClick={() => setEditSensorModal({ open: false, sensor: null })}>
+                          <X size={20} />
+                        </Button>
                       </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-2">Location</label>
-                        <input
-                          type="text"
-                          value={editBtModal.sensor?.location ?? ""}
-                          disabled
-                          className="w-full border border-border rounded-lg p-3 bg-muted text-muted-foreground"
-                        />
+
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium mb-2">Sensor ID</label>
+                          <input
+                            type="text"
+                            value={editSensorModal.sensor.id}
+                            disabled
+                            className="w-full border border-border rounded-lg p-3 bg-muted text-muted-foreground"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-2">Location</label>
+                          <input
+                            type="text"
+                            value={editSensorModal.sensor.location}
+                            disabled
+                            className="w-full border border-border rounded-lg p-3 bg-muted text-muted-foreground"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-2">
+                            Power Type <span className="text-red-500">*</span>
+                          </label>
+                          <select
+                            value={editSensorPowerType}
+                            onChange={(e) => setEditSensorPowerType(e.target.value)}
+                            className="w-full border border-border rounded-lg p-3 bg-background focus:outline-none focus:border-accent"
+                          >
+                            <option value="" disabled>Select power type</option>
+                            <option value="Direct Power">Direct Power</option>
+                            <option value="Solar">Solar</option>
+                          </select>
+                        </div>
                       </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-2">
-                          Power Type<span className="text-red-500 ml-0.5">*</span>
-                        </label>
-                        <select
-                          value={editBtModal.powerType}
-                          onChange={(e) => setEditBtModal(m => ({ ...m, powerType: e.target.value }))}
-                          className="w-full border border-border rounded-lg p-3 bg-background focus:outline-none focus:border-accent text-sm"
+
+                      <div className="flex gap-3 mt-6">
+                        <Button
+                          variant="outline"
+                          className="flex-1 bg-transparent"
+                          onClick={() => setEditSensorModal({ open: false, sensor: null })}
                         >
-                          <option value="" disabled>Select power type</option>
-                          <option value="Direct Power">Direct Power</option>
-                          <option value="Solar">Solar</option>
-                        </select>
+                          Cancel
+                        </Button>
+                        <Button
+                          className="flex-1 bg-accent hover:bg-accent/90 text-white"
+                          disabled={!editSensorPowerType}
+                          onClick={() => setEditSensorModal({ open: false, sensor: null })}
+                        >
+                          Save
+                        </Button>
                       </div>
                     </div>
-
-                    {/* Footer */}
-                    <div className="flex-shrink-0 flex justify-end gap-3 px-6 py-4 border-t border-border">
-                      <Button variant="outline" onClick={() => setEditBtModal({ open: false, sensor: null, powerType: "" })}>
-                        Cancel
-                      </Button>
-                      <Button
-                        className="bg-accent hover:bg-accent/90 text-white"
-                        disabled={!editBtModal.powerType}
-                        onClick={() => setEditBtModal({ open: false, sensor: null, powerType: "" })}
-                      >
-                        Save
-                      </Button>
-                    </div>
-
                   </Card>
                 </div>
               )}
 
-              {/* Decommission Sensor Confirmation Modal */}
-              {decommissionModal.open && (
+              {/* Decommission Sensor Modal */}
+              {decommissionSensorModal.open && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                  <Card className="w-full max-w-md flex flex-col overflow-hidden">
-
-                    {/* Header */}
-                    <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-b border-border">
-                      <div className="flex items-center gap-2">
-                        <AlertTriangle size={20} className="text-orange-500" />
-                        <h2 className="text-lg font-bold">Remove Sensor — {decommissionModal.sensorId}</h2>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setDecommissionModal({ open: false, sensorId: "" })}
-                      >
-                        <X size={20} />
-                      </Button>
-                    </div>
-
-                    {/* Body */}
-                    <div className="px-6 py-5 space-y-4">
-                      {/* Warning box */}
-                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 text-sm text-orange-800">
-                        <strong>Warning:</strong> This will unlink the sensor from this crossing. The sensor will no longer collect data for this customer's crossing. The sensor itself will not be deleted.
+                  <Card className="w-full max-w-md">
+                    <div className="p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                            <AlertTriangle size={20} className="text-orange-600" />
+                          </div>
+                          <h2 className="text-xl font-bold">Remove Sensor - {decommissionSensorModal.sensorId}</h2>
+                        </div>
+                        <Button variant="ghost" size="sm" onClick={() => setDecommissionSensorModal({ open: false, sensorId: "" })}>
+                          <X size={20} />
+                        </Button>
                       </div>
 
-                      {/* Confirmation input */}
-                      <div>
-                        <p className="text-sm text-foreground mb-3">
-                          To confirm, please type the Sensor ID <span className="font-mono font-semibold">{decommissionModal.sensorId}</span> below:
+                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
+                        <p className="text-sm text-orange-800">
+                          <strong>Warning:</strong> This will unlink the sensor from this crossing. The sensor will no longer collect data for this customer's crossing. The sensor itself will not be deleted.
                         </p>
-                        <input
-                          type="text"
-                          placeholder="Type Sensor ID to confirm"
-                          value={decommissionInput}
-                          onChange={(e) => setDecommissionInput(e.target.value)}
-                          className="w-full border border-border rounded-lg p-3 bg-background focus:outline-none focus:border-orange-400 text-sm"
-                        />
+                      </div>
+
+                      <p className="text-sm text-muted-foreground mb-4">
+                        To confirm, please type the Sensor ID <strong>{decommissionSensorModal.sensorId}</strong> below:
+                      </p>
+
+                      <input
+                        type="text"
+                        placeholder="Type Sensor ID to confirm"
+                        value={decommissionSensorConfirm}
+                        onChange={(e) => setDecommissionSensorConfirm(e.target.value)}
+                        className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:border-accent mb-4"
+                      />
+
+                      <div className="flex gap-3">
+                        <Button
+                          variant="outline"
+                          className="flex-1 bg-transparent"
+                          onClick={() => setDecommissionSensorModal({ open: false, sensorId: "" })}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          className="flex-1 bg-orange-600 hover:bg-orange-700 text-white"
+                          disabled={decommissionSensorConfirm !== decommissionSensorModal.sensorId}
+                          onClick={() => setDecommissionSensorModal({ open: false, sensorId: "" })}
+                        >
+                          Remove Sensor
+                        </Button>
                       </div>
                     </div>
-
-                    {/* Footer */}
-                    <div className="flex-shrink-0 flex justify-end gap-3 px-6 py-4 border-t border-border">
-                      <Button variant="outline" onClick={() => setDecommissionModal({ open: false, sensorId: "" })}>
-                        Cancel
-                      </Button>
-                      <Button
-                        className="bg-orange-500 hover:bg-orange-600 text-white disabled:opacity-40"
-                        disabled={decommissionInput !== decommissionModal.sensorId}
-                        onClick={() => setDecommissionModal({ open: false, sensorId: "" })}
-                      >
-                        Remove Sensor
-                      </Button>
-                    </div>
-
                   </Card>
                 </div>
               )}
@@ -1031,14 +1084,14 @@ export default function ConfigureCrossingPage() {
                   <table className="w-full text-sm">
                     <thead className="border-b border-border">
                       <tr className="text-left">
-                        <th className="pb-3 font-bold text-sm">Name</th>
-                        <th className="pb-3 font-bold text-sm">Voltage</th>
-                        <th className="pb-3 font-bold text-sm">Status</th>
-                        <th className="pb-3 font-bold text-sm">Device ID</th>
-                        <th className="pb-3 font-bold text-sm">VIN #</th>
-                        <th className="pb-3 font-bold text-sm">Lat/Long</th>
-                        <th className="pb-3 font-bold text-sm">Current Message</th>
-                        <th className="pb-3 font-bold text-sm text-center">Actions</th>
+                        <th className="pb-3 font-semibold text-sm">Name</th>
+                        <th className="pb-3 font-semibold text-sm">Voltage</th>
+                        <th className="pb-3 font-semibold text-sm">Status</th>
+                        <th className="pb-3 font-semibold text-sm">Device ID</th>
+                        <th className="pb-3 font-semibold text-sm">VIN #</th>
+                        <th className="pb-3 font-semibold text-sm">Lat/Long</th>
+                        <th className="pb-3 font-semibold text-sm">Current Message</th>
+                        <th className="pb-3 font-semibold text-sm text-center">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1095,14 +1148,14 @@ export default function ConfigureCrossingPage() {
                   <table className="w-full text-sm">
                     <thead className="border-b border-border">
                       <tr className="text-left">
-                        <th className="pb-3 font-bold text-sm">Name</th>
-                        <th className="pb-3 font-bold text-sm">Voltage</th>
-                        <th className="pb-3 font-bold text-sm">Status</th>
-                        <th className="pb-3 font-bold text-sm">Device ID</th>
-                        <th className="pb-3 font-bold text-sm">VIN #</th>
-                        <th className="pb-3 font-bold text-sm">Lat/Long</th>
-                        <th className="pb-3 font-bold text-sm">State</th>
-                        <th className="pb-3 font-bold text-sm text-center">Actions</th>
+                        <th className="pb-3 font-semibold text-sm">Name</th>
+                        <th className="pb-3 font-semibold text-sm">Voltage</th>
+                        <th className="pb-3 font-semibold text-sm">Status</th>
+                        <th className="pb-3 font-semibold text-sm">Device ID</th>
+                        <th className="pb-3 font-semibold text-sm">VIN #</th>
+                        <th className="pb-3 font-semibold text-sm">Lat/Long</th>
+                        <th className="pb-3 font-semibold text-sm">State</th>
+                        <th className="pb-3 font-semibold text-sm text-center">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1205,15 +1258,34 @@ export default function ConfigureCrossingPage() {
                 <p className="text-sm text-muted-foreground">
                   Configure the power and frequency settings for the sensor at this crossing.
                 </p>
+                <div className="flex items-center gap-2">
                   <Button
                     size="sm"
-                    className="bg-accent hover:bg-accent/90 text-white"
-                    onClick={() => setShowAddBellConfig(true)}
+                    variant="outline"
+                    className="border-accent text-accent hover:bg-accent/10 bg-transparent"
+                    onClick={() => setShowConfigSensorDrawer(true)}
                   >
-                    <Plus size={16} className="mr-2" />
-                    Add Bell Config
+                    Configure Sensor
                   </Button>
+                  {(calState === -1 || calState === 1) && (
+                    <Button
+                      size="sm"
+                      className="bg-accent hover:bg-accent/90 text-white"
+                      onClick={() => setShowAddBellConfig(true)}
+                    >
+                      <Plus size={16} className="mr-2" />
+                      Add Known Bell
+                    </Button>
+                  )}
+                </div>
               </div>
+
+              {calState === 0 && (
+                <div className="px-4 py-3 bg-muted rounded-lg border border-border text-sm text-muted-foreground">
+                  Bell management is not available for unassigned sensors.
+                </div>
+              )}
+
               <div className="border border-border rounded-lg overflow-hidden">
                 <table className="w-full">
                   <thead className="bg-gray-100">
@@ -1222,36 +1294,71 @@ export default function ConfigureCrossingPage() {
                       <th className="px-4 py-3 font-semibold">Bell Code</th>
                       <th className="px-4 py-3 font-semibold">Frequency (Hz)</th>
                       <th className="px-4 py-3 font-semibold">Power (dB)</th>
-                      <th className="px-4 py-3 font-semibold text-center">Action</th>
+                      {(calState === 2 || calState === 3) && (
+                        <th className="px-4 py-3 font-semibold text-center">Action</th>
+                      )}
                     </tr>
                   </thead>
                   <tbody>
-                    {pagedBellTabRows.map((row, i) => (
-                      <tr key={i} className="border-t border-border hover:bg-muted/30 transition">
-                        <td className="px-4 py-3 text-sm">{row.bellType}</td>
-                        <td className="px-4 py-3 text-sm">{row.bellCode}</td>
-                        <td className="px-4 py-3 text-sm">{row.freq}</td>
-                        <td className="px-4 py-3 text-sm">{row.power}</td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center justify-center gap-1">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="hover:bg-accent/10 text-accent"
-                              onClick={() => setShowEditBellConfig({ open: true, freq: row.freq, power: row.power })}
-                            >
-                              <Edit size={16} />
-                            </Button>
-                            <Button size="sm" variant="ghost" className="hover:bg-red-100 text-red-600">
-                              <Trash2 size={16} />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                    {pagedBellTabRows.map((row, i) => {
+                      const globalIdx = (bellTabPage - 1) * TAB_PAGE_SIZE + i
+                      return (
+                        <tr key={i} className="border-t border-border hover:bg-muted/30 transition">
+                          <td className="px-4 py-3 text-sm">{row.bellType}</td>
+                          <td className="px-4 py-3 text-sm">{row.bellCode}</td>
+                          <td className="px-4 py-3">
+                            {calState !== 0 ? (
+                              <input
+                                type="text"
+                                inputMode="numeric"
+                                value={row.freq}
+                                onChange={e => handleBellTabRowChange(globalIdx, "freq", e.target.value)}
+                                className="w-24 border border-border rounded px-2 py-1 text-sm bg-background focus:outline-none focus:border-accent font-mono"
+                              />
+                            ) : (
+                              <span className="text-sm">{row.freq}</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3">
+                            {calState !== 0 ? (
+                              <input
+                                type="text"
+                                inputMode="numeric"
+                                value={row.power}
+                                onChange={e => handleBellTabRowChange(globalIdx, "power", e.target.value)}
+                                className="w-20 border border-border rounded px-2 py-1 text-sm bg-background focus:outline-none focus:border-accent"
+                              />
+                            ) : (
+                              <span className="text-sm">{row.power}</span>
+                            )}
+                          </td>
+                          {(calState === 2 || calState === 3) && (
+                            <td className="px-4 py-3">
+                              <div className="flex items-center justify-center">
+                                <Button size="sm" variant="ghost" className="hover:bg-red-100 text-red-600" onClick={() => setDeleteBellModal({ open: true, bellType: row.bellType, bellCode: row.bellCode })}>
+                                  <Trash2 size={16} />
+                                </Button>
+                              </div>
+                            </td>
+                          )}
+                        </tr>
+                      )
+                    })}
                   </tbody>
                 </table>
                 <TablePagination currentPage={bellTabPage} totalPages={bellTabTotalPages} onPageChange={setBellTabPage} />
+                <div className="fixed bottom-6 right-6 z-50 shadow-lg rounded-md">
+                  <Button
+                    disabled={!bellTabDirty}
+                    className={`px-8 transition ${
+                      bellTabDirty
+                        ? "bg-accent hover:bg-accent/90 text-white"
+                        : "bg-muted text-muted-foreground cursor-not-allowed"
+                    }`}
+                  >
+                    Save
+                  </Button>
+                </div>
               </div>
 
               {/* Add Bell Config Modal — 2-step */}
@@ -1352,7 +1459,7 @@ export default function ConfigureCrossingPage() {
                           {/* Frequency range preview */}
                           <div className="grid grid-cols-2 gap-4">
                             <div>
-                              <label className="text-xs text-muted-foreground block mb-1">First Frequency</label>
+                              <label className="text-sm font-medium text-muted-foreground block mb-1">First Frequency</label>
                               <input
                                 type="text"
                                 defaultValue={selectedBellData.frequencies[0]}
@@ -1360,7 +1467,7 @@ export default function ConfigureCrossingPage() {
                               />
                             </div>
                             <div>
-                              <label className="text-xs text-muted-foreground block mb-1">Last Frequency</label>
+                              <label className="text-sm font-medium text-muted-foreground block mb-1">Last Frequency</label>
                               <input
                                 type="text"
                                 defaultValue={selectedBellData.frequencies[selectedBellData.frequencies.length - 1]}
@@ -1517,11 +1624,149 @@ export default function ConfigureCrossingPage() {
                 </div>
               )}
 
+              {/* Delete Bell Config Modal */}
+              {deleteBellModal?.open && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                  <Card className="w-full max-w-md">
+                    <div className="p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                            <AlertTriangle size={20} className="text-orange-600" />
+                          </div>
+                          <h2 className="text-xl font-bold">Delete Bell Configuration</h2>
+                        </div>
+                        <Button variant="ghost" size="sm" onClick={() => setDeleteBellModal(null)}>
+                          <X size={20} />
+                        </Button>
+                      </div>
+
+                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
+                        <p className="text-sm text-orange-800">
+                          <strong>Warning:</strong> This will permanently remove this bell configuration from the crossing. This action cannot be undone.
+                        </p>
+                      </div>
+
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Are you sure you want to delete the <strong>{deleteBellModal.bellType}</strong> - Bell Code <strong>{deleteBellModal.bellCode}</strong> configuration?
+                      </p>
+
+                      <div className="flex gap-3">
+                        <Button variant="outline" className="flex-1 bg-transparent" onClick={() => setDeleteBellModal(null)}>
+                          Cancel
+                        </Button>
+                        <Button
+                          className="flex-1 bg-orange-600 hover:bg-orange-700 text-white"
+                          onClick={() => setDeleteBellModal(null)}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                </div>
+              )}
+
             </div>
           )}
         </div>
 
       </div>{/* end tab content */}
+
+      {/* Delete Rail Segment Modal */}
+      {deleteRailModal?.open && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-md">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                    <AlertTriangle size={20} className="text-orange-600" />
+                  </div>
+                  <h2 className="text-xl font-bold">Delete Rail Segment - {deleteRailModal.segment}</h2>
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => setDeleteRailModal(null)}>
+                  <X size={20} />
+                </Button>
+              </div>
+
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
+                <p className="text-sm text-orange-800">
+                  <strong>Warning:</strong> This will permanently delete this rail segment. Train speed and distance data for this segment will be removed from this crossing configuration.
+                </p>
+              </div>
+
+              <p className="text-sm text-muted-foreground mb-4">
+                To confirm, please type the Segment ID <strong>{deleteRailModal.startId}</strong> below:
+              </p>
+
+              <input
+                type="text"
+                placeholder="Type Segment ID to confirm"
+                value={deleteRailConfirm}
+                onChange={(e) => setDeleteRailConfirm(e.target.value)}
+                className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:border-accent mb-4"
+              />
+
+              <div className="flex gap-3">
+                <Button variant="outline" className="flex-1 bg-transparent" onClick={() => setDeleteRailModal(null)}>
+                  Cancel
+                </Button>
+                <Button
+                  className="flex-1 bg-orange-600 hover:bg-orange-700 text-white"
+                  disabled={deleteRailConfirm !== deleteRailModal.startId}
+                  onClick={() => setDeleteRailModal(null)}
+                >
+                  Delete Segment
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* Delete Road Segment Modal */}
+      {deleteRoadModal?.open && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-md">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                    <AlertTriangle size={20} className="text-orange-600" />
+                  </div>
+                  <h2 className="text-xl font-bold">Delete Road Segment</h2>
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => setDeleteRoadModal(null)}>
+                  <X size={20} />
+                </Button>
+              </div>
+
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
+                <p className="text-sm text-orange-800">
+                  <strong>Warning:</strong> This will permanently delete this road segment. The Origin and Destination points will be removed from this crossing configuration.
+                </p>
+              </div>
+
+              <p className="text-sm text-muted-foreground mb-4">
+                Are you sure you want to delete the segment from <strong>{deleteRoadModal.origin}</strong> to <strong>{deleteRoadModal.destination}</strong>?
+              </p>
+
+              <div className="flex gap-3">
+                <Button variant="outline" className="flex-1 bg-transparent" onClick={() => setDeleteRoadModal(null)}>
+                  Cancel
+                </Button>
+                <Button
+                  className="flex-1 bg-orange-600 hover:bg-orange-700 text-white"
+                  onClick={() => setDeleteRoadModal(null)}
+                >
+                  Delete Segment
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
 
       {/* DMS Logs Modal */}
       {showDmsLogsModal.open && (
@@ -1562,10 +1807,10 @@ export default function ConfigureCrossingPage() {
                 <table className="w-full text-sm">
                   <thead className="bg-muted border-b border-border">
                     <tr className="text-left">
-                      <th className="px-3 py-3 font-bold text-sm">Timestamp</th>
-                      <th className="px-3 py-3 font-bold text-sm">Event</th>
-                      <th className="px-3 py-3 font-bold text-sm">Message</th>
-                      <th className="px-3 py-3 font-bold text-sm">Status</th>
+                      <th className="px-3 py-3 font-semibold text-sm">Timestamp</th>
+                      <th className="px-3 py-3 font-semibold text-sm">Event</th>
+                      <th className="px-3 py-3 font-semibold text-sm">Message</th>
+                      <th className="px-3 py-3 font-semibold text-sm">Status</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1662,6 +1907,241 @@ export default function ConfigureCrossingPage() {
               </div>
             </div>
           </Card>
+        </div>
+      )}
+      {/* Configure Sensor Drawer */}
+      {showConfigSensorDrawer && (() => {
+        const staticData = sensorStaticData[selectedCrossing.sensorId] ?? { ipAddress: "—", deviceType: "—" }
+        return (
+          <>
+            {/* Backdrop */}
+            <div
+              className="fixed inset-0 bg-black/50 z-40"
+              onClick={() => setShowConfigSensorDrawer(false)}
+            />
+            {/* Drawer panel */}
+            <div className="fixed right-0 top-0 h-full w-[480px] bg-background z-50 flex flex-col shadow-2xl border-l border-border">
+
+              {/* Header */}
+              <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-b border-border">
+                <h2 className="text-base font-bold">Configure Sensor — {selectedCrossing.sensorId}</h2>
+                <Button variant="ghost" size="sm" onClick={() => setShowConfigSensorDrawer(false)}>
+                  <X size={20} />
+                </Button>
+              </div>
+
+              {/* Scrollable form body */}
+              <div className="flex-1 overflow-y-auto px-6 py-5">
+                <div className="grid grid-cols-2 gap-x-4 gap-y-5">
+
+                  {/* Sensor ID — read-only */}
+                  <div>
+                    <label className="block text-sm font-medium text-muted-foreground mb-1.5">Sensor ID</label>
+                    <input
+                      type="text"
+                      value={selectedCrossing.sensorId}
+                      disabled
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-muted text-muted-foreground cursor-not-allowed"
+                    />
+                  </div>
+
+                  {/* IP Address — read-only */}
+                  <div>
+                    <label className="block text-sm font-medium text-muted-foreground mb-1.5">IP Address</label>
+                    <input
+                      type="text"
+                      value={staticData.ipAddress}
+                      disabled
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-muted text-muted-foreground cursor-not-allowed"
+                    />
+                  </div>
+
+                  {/* Device Type — read-only, full width */}
+                  <div className="col-span-2">
+                    <label className="block text-sm font-medium text-muted-foreground mb-1.5">Device Type</label>
+                    <input
+                      type="text"
+                      value={staticData.deviceType}
+                      disabled
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-muted text-muted-foreground cursor-not-allowed"
+                    />
+                  </div>
+
+                  {/* Sensor Status */}
+                  <div>
+                    <label className="block text-sm font-medium mb-1.5">
+                      Sensor Status <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={drawerStatus}
+                      onChange={e => setDrawerStatus(e.target.value)}
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:border-accent"
+                    >
+                      <option value="Active">Active</option>
+                      <option value="Down">Down</option>
+                    </select>
+                  </div>
+
+                  {/* Calibration Status */}
+                  <div>
+                    <label className="block text-sm font-medium mb-1.5">
+                      Calibration Status <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={drawerCalibration}
+                      onChange={e => setDrawerCalibration(e.target.value)}
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:border-accent"
+                    >
+                      <option value="Unassigned (State 0)">Unassigned (State 0)</option>
+                      <option value="Low Power (State -1)">Low Power (State -1)</option>
+                      <option value="Calibrating (State 1)">Calibrating (State 1)</option>
+                      <option value="Validating (State 2)">Validating (State 2)</option>
+                      <option value="Calibrated (State 3)">Calibrated (State 3)</option>
+                    </select>
+                  </div>
+
+                  {/* Location — full width */}
+                  <div className="col-span-2">
+                    <label className="block text-sm font-medium mb-1.5">
+                      Location <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={drawerLocation}
+                      onChange={e => setDrawerLocation(e.target.value)}
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:border-accent"
+                    />
+                  </div>
+
+                  {/* Power Type */}
+                  <div>
+                    <label className="block text-sm font-medium mb-1.5">
+                      Power Type <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={drawerPowerType}
+                      onChange={e => setDrawerPowerType(e.target.value)}
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:border-accent"
+                    >
+                      <option value="Direct Power">Direct Power</option>
+                      <option value="Solar">Solar</option>
+                    </select>
+                  </div>
+
+                  {/* Camera Module */}
+                  <div>
+                    <label className="block text-sm font-medium mb-1.5">
+                      Camera Module <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={drawerCameraModule}
+                      onChange={e => setDrawerCameraModule(e.target.value)}
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:border-accent"
+                    >
+                      <option value="Yes">Yes</option>
+                      <option value="No">No</option>
+                    </select>
+                  </div>
+
+                  {/* SIM Card ID — full width */}
+                  <div className="col-span-2">
+                    <label className="block text-sm font-medium mb-1.5">
+                      SIM Card ID <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={drawerSimCardId}
+                      onChange={e => setDrawerSimCardId(e.target.value)}
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:border-accent"
+                    />
+                  </div>
+
+                  {/* SIM Card Provider */}
+                  <div>
+                    <label className="block text-sm font-medium mb-1.5">
+                      SIM Card Provider <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={drawerSimCardProvider}
+                      onChange={e => setDrawerSimCardProvider(e.target.value)}
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:border-accent"
+                    />
+                  </div>
+
+                  {/* Manufacturer */}
+                  <div>
+                    <label className="block text-sm font-medium mb-1.5">
+                      Manufacturer <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={drawerManufacturer}
+                      onChange={e => setDrawerManufacturer(e.target.value)}
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:border-accent"
+                    />
+                  </div>
+
+                  {/* Warranty Start Date */}
+                  <div>
+                    <label className="block text-sm font-medium mb-1.5">
+                      Warranty Start Date <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      value={drawerWarrantyStart}
+                      onChange={e => setDrawerWarrantyStart(e.target.value)}
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:border-accent"
+                    />
+                  </div>
+
+                  {/* Warranty End Date */}
+                  <div>
+                    <label className="block text-sm font-medium mb-1.5">
+                      Warranty End Date <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      value={drawerWarrantyEnd}
+                      onChange={e => setDrawerWarrantyEnd(e.target.value)}
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:border-accent"
+                    />
+                  </div>
+
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="flex-shrink-0 flex justify-end px-6 py-4 border-t border-border">
+                <Button
+                  className="bg-accent hover:bg-accent/90 text-white px-8"
+                  onClick={() => setShowConfigSensorDrawer(false)}
+                >
+                  Save
+                </Button>
+              </div>
+
+            </div>
+          </>
+        )
+      })()}
+
+      {/* Unsaved Changes Dialog */}
+      {showLeaveDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowLeaveDialog(false)} />
+          <div className="relative bg-background rounded-xl shadow-2xl p-6 w-full max-w-sm mx-4 z-10">
+            <h2 className="text-lg font-bold mb-2">Unsaved Changes</h2>
+            <p className="text-sm text-muted-foreground mb-6">You have unsaved changes. Are you sure you want to leave?</p>
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={() => { setShowLeaveDialog(false); setPendingAction(null) }}>
+                Stay
+              </Button>
+              <Button className="bg-accent hover:bg-accent/90 text-white" onClick={confirmLeave}>
+                Leave
+              </Button>
+            </div>
+          </div>
         </div>
       )}
     </PortalLayout>

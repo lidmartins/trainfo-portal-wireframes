@@ -18,7 +18,7 @@ const sidebarItems = [
 
 export default function MapPortal() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
-  const [selectedCrossing, setSelectedCrossing] = useState(null)
+  const [selectedCrossing, setSelectedCrossing] = useState<{ id: number; name: string; trains: number; vehicles: number; safety: string; delay: number } | null>(null)
 
   const crossings = [
     { id: 1, name: "Downtown Crossing A", trains: 8, vehicles: 342, safety: "Excellent", delay: 12.4 },

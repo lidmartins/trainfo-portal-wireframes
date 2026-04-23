@@ -1,7 +1,6 @@
 "use client"
 
 import PortalLayout from "@/components/portal-layout"
-import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Search, Plus, Edit, Trash2, ChevronRight, X } from "lucide-react"
 import { useState } from "react"
@@ -119,38 +118,36 @@ export default function CSEBellsPage() {
         </div>
 
         {/* Bells Table */}
-        <Card className="p-6">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="border-b border-border">
-                <tr className="text-left">
-                  <th className="pb-3 font-bold text-sm w-1/4">Bell Type ↕</th>
-                  <th className="pb-3 font-bold text-sm">Bell Frequency (Hz) ↕</th>
-                  <th className="pb-3 font-bold text-sm text-center w-32">Actions</th>
+        <div className="border border-border rounded-lg overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-gray-100">
+              <tr className="text-left text-sm">
+                <th className="px-4 py-3 font-semibold w-1/4">Bell Type ↕</th>
+                <th className="px-4 py-3 font-semibold">Bell Frequency (Hz) ↕</th>
+                <th className="px-4 py-3 font-semibold text-center w-32">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pagedBells.map((bell) => (
+                <tr key={bell.id} className="border-t border-border hover:bg-muted/30 transition">
+                  <td className="px-4 py-3 text-sm font-medium">{bell.type}</td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">{bell.frequencies.join(" - ")}</td>
+                  <td className="px-4 py-3 text-sm">
+                    <div className="flex items-center justify-center gap-2">
+                      <Button size="sm" variant="ghost" className="hover:bg-accent/10 text-accent">
+                        <Edit size={16} />
+                      </Button>
+                      <Button size="sm" variant="ghost" className="hover:bg-red-100 text-red-600">
+                        <Trash2 size={16} />
+                      </Button>
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {pagedBells.map((bell) => (
-                  <tr key={bell.id} className="border-b border-border hover:bg-muted/50 transition">
-                    <td className="py-4 font-medium">{bell.type}</td>
-                    <td className="py-4 text-muted-foreground">{bell.frequencies.join(" - ")}</td>
-                    <td className="py-4">
-                      <div className="flex items-center justify-center gap-2">
-                        <Button size="sm" variant="ghost" className="hover:bg-accent/10 text-accent">
-                          <Edit size={16} />
-                        </Button>
-                        <Button size="sm" variant="ghost" className="hover:bg-red-100 text-red-600">
-                          <Trash2 size={16} />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <TablePagination currentPage={bellsPage} totalPages={bellsTotalPages} onPageChange={setBellsPage} />
-        </Card>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <TablePagination currentPage={bellsPage} totalPages={bellsTotalPages} onPageChange={setBellsPage} />
       </div>
 
       {/* ── Sticky bottom action bar ── */}
